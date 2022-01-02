@@ -3,7 +3,7 @@
     /// <summary>
     /// Responsible of reading and interpreting schema files.
     /// </summary>
-    public class SchemaParser
+    public static class SchemaParser
     {
     }
 }

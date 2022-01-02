@@ -2,11 +2,10 @@
 {
     public enum SchemaTypeFieldValueType
     {
-        Null,
         String,
         Boolean,
-        Float64,
         Float32,
+        Float64,
         Uint8,
         Uint16,
         Uint32,
