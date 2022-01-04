@@ -11,7 +11,7 @@ namespace SchemaInterpreter
         static void Main(string[] args)
         {
             var types = LoadVerbs();
-            Parser.Default.ParseArguments(args, types)
+            CommandLine.Parser.Default.ParseArguments(args, types)
                 .WithParsed(Run);
         }
 

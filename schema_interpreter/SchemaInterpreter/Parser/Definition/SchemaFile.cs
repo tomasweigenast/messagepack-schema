@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace SchemaInterpreter.Parser
+namespace SchemaInterpreter.Parser.Definition
 {
     /// <summary>
     /// Contains information about a schema file.

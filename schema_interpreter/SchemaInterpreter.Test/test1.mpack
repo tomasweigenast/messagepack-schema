@@ -1,0 +1,26 @@
+﻿//
+// Test file parser
+// This should be interpreted as a comment
+//
+version:1
+
+type Car {
+	model:string 0
+	brand:string 1
+	license_plate:string 2
+	passenger_quantity:uint8 3 = 5
+	type:CarType 4 = CarType.unknown
+	aileron?:string 5
+	wheels:list(Wheel) 6 @(["unused":true], ["wheelVersion": 2])
+}
+
+type Wheel {
+	screws:map(int,string) 1 = [(1,"hello world"),(2,"another world")]
+}
+
+type CarType enum {
+	unknown 0
+	van 1
+	furgo 2
+	sports 3
+}
