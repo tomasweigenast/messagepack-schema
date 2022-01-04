@@ -186,6 +186,21 @@ namespace SchemaInterpreter.Parser
         }
 
         /// <summary>
+        /// Verifies that all enums have consecutive, starting from 0, field index
+        /// </summary>
+        public void VerifyEnums()
+        {
+            foreach (SchemaType type in mFiles.SelectMany(x => x.Types).Where(x => x.Modifier == SchemaTypeModifier.Enum))
+            {
+                if(type.Fields.First().Index != 0)
+                    Check.ThrowInvalidSchema("First enum field should have 0-index.");
+
+                if (!type.Fields.Select(x => x.Index).IsConsecutive())
+                    Check.ThrowInvalidSchema("Enum field indexes should be consecutive.");
+            }
+        }
+
+        /// <summary>
         /// Gets the compiled files and clear the current ParserContext
         /// </summary>
         public IEnumerable<SchemaFile> GetCompiledAndClear()

@@ -1,0 +1,6 @@
+﻿version:1
+
+type VehicleType enum {
+	undefined 0
+	car 3
+}

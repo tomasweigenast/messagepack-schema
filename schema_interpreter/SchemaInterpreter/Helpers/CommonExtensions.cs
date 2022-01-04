@@ -13,5 +13,11 @@ namespace SchemaInterpreter.Helpers
         /// <returns></returns>
         public static IEnumerable<T> AsEnumerable<T>(this T obj)
             => Enumerable.Repeat(obj, 1);
+
+        /// <summary>
+        /// Checks if a enumerable of numbers is consecutive.
+        /// </summary>
+        public static bool IsConsecutive(this IEnumerable<int> enumerable)
+            => !enumerable.Select((i, j) => i - j).Distinct().Skip(1).Any();
     }
 }

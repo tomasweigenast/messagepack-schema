@@ -254,5 +254,39 @@ namespace SchemaInterpreter.Test
                 ParserContext.Current.VerifyAllTypes();
             }));
         }
+
+        [Fact]
+        public async Task TestVerifyConsecutiveEnums()
+        {
+            ParserContext.Create();
+
+            var schema = new StreamReader(File.OpenRead("test8.mpack"));
+            var parser = new SchemaFileParser();
+
+            ParserContext.Current.AddPackage(new SchemaFile("test8", 1));
+            await parser.ParseFile(schema, "test8");
+
+            Assert.Throws<InvalidSchemaException>(() =>
+            {
+                ParserContext.Current.VerifyEnums();
+            });
+        }
+
+        [Fact]
+        public async Task TestVerifyStartFromZeroEnums()
+        {
+            ParserContext.Create();
+
+            var schema = new StreamReader(File.OpenRead("test9.mpack"));
+            var parser = new SchemaFileParser();
+
+            ParserContext.Current.AddPackage(new SchemaFile("test9", 1));
+            await parser.ParseFile(schema, "test9");
+
+            Assert.Throws<InvalidSchemaException>(() =>
+            {
+                ParserContext.Current.VerifyEnums();
+            });
+        }
     }
 }

@@ -28,6 +28,12 @@ namespace SchemaInterpreter.Parser.V1
             // Generate default values
             ParserContext.Current.GenerateDefaultValues();
 
+            // Verify all values
+            ParserContext.Current.VerifyAllTypes();
+
+            // Verify enums
+            ParserContext.Current.VerifyEnums();
+
             // Return compiled files
             return ParserContext.Current.GetCompiledAndClear();
         }
