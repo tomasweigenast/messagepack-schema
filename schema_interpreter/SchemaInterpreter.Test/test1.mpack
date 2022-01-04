@@ -4,23 +4,28 @@
 //
 version:1
 
-type Car {
-	model:string 0
-	brand:string 1
-	license_plate:string 2
-	passenger_quantity:uint8 3 = 5
-	type:CarType 4 = CarType.unknown
-	aileron?:string 5
-	wheels:list(Wheel) 6 @(["unused":true], ["wheelVersion": 2])
+type MyType {
+	string_value:string 0 = "hello world"
+	bool_value:boolean 1 = false
+	float32_value:float32 2 = 12.32
+	float64_value:float64 3 = 36.232
+	uint8_value:uint8 4 = 3
+	uint16_value:uint16 5 = 299
+	uint32_value:uint32 6 = 2588445
+	uint64_value:uint64 7 = 9898989784518
+	int8_value:int8 8 = -8
+	int16_value:int16 9 = -325
+	int32_value:int32 10 = -3665595 @(["obsolete":true])
+	int64_value:int64 11 = -878784548481851
+	binary_value:binary 12
+	list_value:list(string) 13 = ["first", "second"]
+	map_value:map(string,int64) 14 = [("test":215),("another":-448484861)]
+	enum_value:MyEnum 15 @(["obsolete":true])
 }
 
-type Wheel {
-	screws:map(int,string) 1 = [(1,"hello world"),(2,"another world")]
-}
-
-type CarType enum {
+type MyEnum enum {
 	unknown 0
-	van 1
-	furgo 2
-	sports 3
+	value 1
+	another 2
+	third 3
 }

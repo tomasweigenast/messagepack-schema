@@ -18,6 +18,7 @@ namespace SchemaInterpreter.Parser
         /// Parses a schema file.
         /// </summary>
         /// <param name="reader">The stream reader used to read the schema.</param>
-        public Task<SchemaFile> ParseFile(StreamReader reader);
+        /// <param name="packageName">The name of the file being reading.</param>
+        public Task ParseFile(StreamReader reader, string packageName);
     }
 }

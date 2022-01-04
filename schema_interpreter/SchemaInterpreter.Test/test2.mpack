@@ -1,0 +1,7 @@
+﻿version:1
+
+type Animal {
+	is_mammal:boolean 0 = false
+	name:string 1
+	discovered_date?:int64 2
+}

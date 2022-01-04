@@ -1,10 +1,10 @@
-﻿using SchemaInterpreter.Exceptions;
-using SchemaInterpreter.Helpers;
+﻿using SchemaInterpreter.Helpers;
 using SchemaInterpreter.Parser.Definition;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -15,15 +15,10 @@ namespace SchemaInterpreter.Parser.V1
         private static readonly int mCurrentVersion = 1;
         private static readonly Regex mTypeNameRegex = new("^[a-zA-Z_]*$", RegexOptions.Compiled);
 
-        private static readonly IList<SchemaType> mTypes = new List<SchemaType>();
-        private static SchemaTypeBuilder mCurrentTypeBuilder = null;
-
         public int Version => 1;
 
-        public async Task<SchemaFile> ParseFile(StreamReader reader)
+        public async Task ParseFile(StreamReader reader, string packageName)
         {
-            mTypes.Clear();
-
             string line;
             int lineIndex = 0;
             bool commentStarted = false;
@@ -33,6 +28,7 @@ namespace SchemaInterpreter.Parser.V1
             {
                 lineIndex++;
                 line = line.Replace("\t", "").Replace("\r", "").Trim();
+                ParserContext.Current.CurrentLine = new FileLine(lineIndex, line, packageName);
 
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
@@ -55,20 +51,20 @@ namespace SchemaInterpreter.Parser.V1
                         continue;
                     }
                     else
-                        throw new InvalidSchemaException("Multiline comments should start with a slash: '/'", lineIndex, line);
+                        Check.ThrowInvalidSchema("Multiline comments should start with a slash: '/'");
 
                 // Start interpreting
                 else
                 {
                     if (line.StartsWith("version:"))
                     {
-                        version = ReadVersion(line, lineIndex);
+                        version = ReadVersion(line);
                         continue;
                     }
                     else
                     {
                         if (version == null)
-                            throw new InvalidSchemaException("Schema does not specify a version. It must be the first line to be set.", lineIndex, line);
+                            Check.ThrowInvalidSchema("Schema does not specify a version. It must be the first line to be set.");
                         else
                         {
                             char lastLineChar = line[^1];
@@ -76,29 +72,29 @@ namespace SchemaInterpreter.Parser.V1
                             {
                                 // Starts a new type
                                 case '{':
-                                    if (mCurrentTypeBuilder != null)
-                                        throw new InvalidSchemaException("When creating a type, closing tags should be present before creating a new one.", lineIndex, line);
+                                    if (ParserContext.Current.CurrentTypeBuilder != null)
+                                        Check.ThrowInvalidSchema("When creating a type, closing tags should be present before creating a new one.");
 
-                                    var (typeName, modifier) = ReadTypeNameAndModifier(line, lineIndex);
-                                    CheckTypeName(typeName, line, lineIndex);
-                                    mCurrentTypeBuilder = new SchemaTypeBuilder(typeName, modifier);
+                                    var (typeName, modifier) = ReadTypeNameAndModifier(line);
+                                    ParserContext.Current.EnsureEmptyTypeName(typeName);
+                                    ParserContext.Current.CurrentTypeBuilder = new SchemaTypeBuilder(typeName, packageName, modifier);
                                     break;
 
                                 // Ends a type.
                                 case '}':
-                                    if (mCurrentTypeBuilder == null)
-                                        throw new InvalidSchemaException("Before closing a type, a new one must be created.", lineIndex, line);
+                                    if (ParserContext.Current.CurrentTypeBuilder == null)
+                                        Check.ThrowInvalidSchema("Before closing a type, a new one must be created.");
 
-                                    mTypes.Add(mCurrentTypeBuilder.Build());
-                                    mCurrentTypeBuilder = null;
+                                    ParserContext.Current.Add(ParserContext.Current.CurrentTypeBuilder.Build(), packageName);
+                                    ParserContext.Current.CurrentTypeBuilder = null;
                                     break;
 
                                 default:
-                                    if (mCurrentTypeBuilder == null)
-                                        throw new InvalidSchemaException("Before specifying a field, a type must be created.", lineIndex, line);
+                                    if (ParserContext.Current.CurrentTypeBuilder == null)
+                                        Check.ThrowInvalidSchema("Before specifying a field, a type must be created.");
 
-                                    var typeField = ReadTypeField(line, lineIndex);
-                                    mCurrentTypeBuilder.AddField(typeField);
+                                    var typeField = ReadTypeField(line);
+                                    ParserContext.Current.CurrentTypeBuilder.AddField(typeField);
                                     break;
                             }
                         }
@@ -106,113 +102,203 @@ namespace SchemaInterpreter.Parser.V1
                 }
 
             }
-
-            return new SchemaFile(1, mTypes);
         }
 
-        private static SchemaTypeField ReadTypeField(string line, int lineIndex)
+        private static SchemaTypeField ReadTypeField(string input)
         {
-            var modifier = mCurrentTypeBuilder.Modifier;
-            string[] splitChars = mCurrentTypeBuilder.Modifier == null ? new string[] { ":", " ", "=", "@" } : new string[] { " " };
-            string[] tokens = line.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
+            string fieldName = null;
+            SchemaTypeFieldValueType fieldType = null;
+            int? fieldIndex = null;
+            string rawDefaultValue = null;
+            IDictionary<string, object> metadata = null;
+            SchemaTypeModifier? modifier = ParserContext.Current.CurrentTypeBuilder.Modifier;
 
-            if (modifier == null && tokens.Length < 3)
-                throw new InvalidSchemaException("Invalid type field declaration.", lineIndex, line);
-            else if (modifier == SchemaTypeModifier.Enum && tokens.Length != 2)
-                throw new InvalidSchemaException("Invalid enum type field declaration.", lineIndex, line);
+            string[] tokens = input.Split(modifier == null ? ":" : " ", 2, StringSplitOptions.RemoveEmptyEntries);
+            fieldName = tokens[0].Trim();
 
-            string fieldName = tokens[0];
-            if (!int.TryParse(tokens[modifier == null ? 2 : 1], out int fieldIndex))
-                throw new InvalidSchemaException("Invalid field index.", lineIndex, line);
-            CheckTypeFieldIndex(fieldIndex, line, lineIndex);
+            if(modifier == SchemaTypeModifier.Enum)
+            {
+                fieldIndex = TypeParser.Int(tokens[1], "Invalid field index.");
+            }
+            else
+            {
+                tokens = tokens[1].Split(" ", 2, StringSplitOptions.TrimEntries);
+                fieldType = GetValueType(tokens[0]);
 
-            if (modifier == SchemaTypeModifier.Enum)
-                return new SchemaTypeField(fieldName, fieldIndex, null, null, false, null);
+                tokens = tokens[1].Split(new string[] { "=", "@" }, StringSplitOptions.TrimEntries);
+                fieldIndex = TypeParser.Int(tokens[0], "Invalid field index.");
+
+                if (tokens.Length > 1 && tokens.Length <= 3)
+                {
+                    if (tokens.Length == 3)
+                    {
+                        rawDefaultValue = tokens[1];
+                        metadata = ReadMetadata(tokens[2]);
+                    }
+                    else if (tokens.Length == 2)
+                    {
+                        string firstToken = tokens[1];
+                        if (firstToken.StartsWith('('))
+                            metadata = ReadMetadata(firstToken);
+                        else
+                            rawDefaultValue = firstToken;
+                    }
+                }
+            }
 
             bool isNullable = fieldName[^1] == '?';
             if (isNullable)
-                fieldName = fieldName[0..^2];
+                if (modifier == SchemaTypeModifier.Enum)
+                    Check.ThrowInvalidSchema("Enums cant have nullable fields.");
+                else
+                    fieldName = fieldName[0..^1];
 
-            SchemaTypeFieldValueType fieldValueType = GetValueType(tokens[1], lineIndex, line);
+            ParserContext.Current.EnsureEmptyTypeName(fieldName);
+            ParserContext.Current.EnsureEmptyTypeFieldIndex(fieldIndex.Value);
 
-            object defaultValue = tokens.Length == 4 ? ValueParser.Parse(tokens[3], fieldValueType, lineIndex, line) : null;
-            IDictionary<string, object> metadata = tokens.Length == 5 ? ReadMetadata(tokens[4], lineIndex, line) : null;
-
-            return new SchemaTypeField(fieldName, fieldIndex, fieldValueType, defaultValue, isNullable, metadata);
+            return new SchemaTypeField(fieldName, fieldIndex.Value, fieldType, rawDefaultValue, isNullable, metadata, ParserContext.Current.CurrentLine);
         }
 
-        private static SchemaTypeFieldValueType GetValueType(string input, int lineIndex, string line)
+        private static SchemaTypeField ReadTypeField_(string input)
+        {
+            // If the input contains metadata
+            string metadataInput = null;
+            if(input.Contains(Keywords.Metadata))
+            {
+                int indexOfMetadata = input.IndexOf(Keywords.Metadata);
+                metadataInput = input[indexOfMetadata..];
+                input = input.Replace(metadataInput, "");
+            }
+
+            // Get a default value if it contains it
+            string rawDefaultValue = null;
+            if (input.Contains(Keywords.DefaultValue))
+            {
+                int indexOfDefaultValue = input.IndexOf(Keywords.DefaultValue);
+                rawDefaultValue = input[indexOfDefaultValue..];
+                input = input.Replace(rawDefaultValue, "");
+            }
+
+            var modifier = ParserContext.Current.CurrentTypeBuilder.Modifier;
+            string[] splitChars = ParserContext.Current.CurrentTypeBuilder.Modifier == null ? new string[] { ":", " " } : new string[] { " " };
+            string[] tokens = input.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
+
+            if (modifier == null && tokens.Length < 3)
+                Check.ThrowInvalidSchema("Invalid type field declaration.");
+            else if (modifier == SchemaTypeModifier.Enum && tokens.Length != 2)
+                Check.ThrowInvalidSchema("Invalid enum type field declaration.");
+
+            string fieldName = tokens[0];
+            if (!int.TryParse(tokens[modifier == null ? 2 : 1], out int fieldIndex))
+                Check.ThrowInvalidSchema("Invalid field index.");
+
+            ParserContext.Current.EnsureEmptyTypeFieldIndex(fieldIndex);
+
+            if (modifier == SchemaTypeModifier.Enum)
+                return new SchemaTypeField(fieldName, fieldIndex, null, null, false, null, ParserContext.Current.CurrentLine);
+
+            bool isNullable = fieldName[^1] == '?';
+            if (isNullable)
+                fieldName = fieldName[0..^1];
+
+            SchemaTypeFieldValueType fieldValueType = GetValueType(tokens[1]);
+
+            IDictionary<string, object> metadata = metadataInput != null ? ReadMetadata(metadataInput) : null;
+
+            return new SchemaTypeField(fieldName, fieldIndex, fieldValueType, rawDefaultValue, isNullable, metadata, ParserContext.Current.CurrentLine);
+        }
+
+        private static SchemaTypeFieldValueType GetValueType(string input)
         {
             string[] tokens = input.Trim().Replace(")", "").Split("(", StringSplitOptions.TrimEntries);
             string valueType = tokens[0];
             string elementType = tokens.Length == 2 ? tokens[1] : null;
 
             if (elementType == null)
-                return SchemaTypeFieldValueType.Primitive(valueType);
+                return GetPrimitiveOrCustomValueType(valueType);
             else
             {
                 string[] elementTypeTokens = elementType.Split(',', StringSplitOptions.TrimEntries);
 
                 if (valueType == SchemaFieldValueTypes.List)
                     if (elementTypeTokens.Length == 1)
-                        return SchemaTypeFieldValueType.List(elementType);
+                        return SchemaTypeFieldValueType.List(GetPrimitiveOrCustomValueType(elementType));
                     else
-                        throw new InvalidSchemaException("List types can only specify element type, not key-value pairs.", lineIndex, line);
+                        Check.ThrowInvalidSchema("List types can only specify element type, not key-value pairs.");
                 else if (valueType == SchemaFieldValueTypes.Map)
                     if (elementTypeTokens.Length == 2)
-                        return SchemaTypeFieldValueType.Map(elementTypeTokens[0], elementTypeTokens[1]);
+                        return SchemaTypeFieldValueType.Map(GetPrimitiveOrCustomValueType(elementTypeTokens[0]), GetPrimitiveOrCustomValueType(elementTypeTokens[1]));
                     else
-                        throw new InvalidSchemaException("Map types should specify key and value types.", lineIndex, line);
+                        Check.ThrowInvalidSchema("Map types should specify key and value types.");
                 else
-                    throw new InvalidSchemaException("Only list and map values can have element types.", lineIndex, line);
+                    Check.ThrowInvalidSchema("Only list and map values can have element types.");
             }
+
+            return null;
         }
 
-        private static (string typeName, SchemaTypeModifier? modifier) ReadTypeNameAndModifier(string line, int lineIndex)
+        private static SchemaTypeFieldValueType GetPrimitiveOrCustomValueType(string valueType)
         {
-            string[] parts = line.Split(" ", StringSplitOptions.TrimEntries).TakeWhile(x => x != Keywords.StartNewType).ToArray();
+            if (SchemaFieldValueTypes.Values.Any(x => x == valueType))
+                return SchemaTypeFieldValueType.Primitive(valueType);
+            else
+                return SchemaTypeFieldValueType.Custom(valueType);
+        }
+
+        private static (string typeName, SchemaTypeModifier? modifier) ReadTypeNameAndModifier(string input)
+        {
+            string[] parts = input.Split(" ", StringSplitOptions.TrimEntries).TakeWhile(x => x != Keywords.StartNewType).ToArray();
             if (parts.Length > 3)
-                throw new InvalidSchemaException("Invalid type declaration.", lineIndex, line);
+                Check.ThrowInvalidSchema("Invalid type declaration.");
 
             string typeKeyword = parts[0];
             if (typeKeyword != Keywords.Type)
-                throw new InvalidSchemaException($"Expected 'type' keyword, given '{typeKeyword}'", lineIndex, line);
+                Check.ThrowInvalidSchema($"Expected 'type' keyword, given '{typeKeyword}'");
 
             string typeName = parts[1];
             if (!mTypeNameRegex.IsMatch(typeName))
-                throw new InvalidSchemaException($"Type name does not match expected regex: '^[a-zA-Z_]*$'", lineIndex, line);
+                Check.ThrowInvalidSchema($"Type name does not match expected regex: '^[a-zA-Z_]*$'");
 
             SchemaTypeModifier? modifier = null;
             if (parts.Length == 3)
-                modifier = ParseModifier(parts[2], line, lineIndex);
+                modifier = ParseModifier(parts[2]);
 
             return (typeName, modifier);
         }
 
-        private static SchemaTypeModifier ParseModifier(string modifier, string line, int lineIndex)
+        private static SchemaTypeModifier ParseModifier(string modifier)
             => modifier switch
             {
                 Keywords.Enum => SchemaTypeModifier.Enum,
-                _ => throw new InvalidSchemaException($"Invalid schema type modifier '{modifier}'", lineIndex, line)
+                _ => throw Check.InvalidSchema($"Invalid schema type modifier '{modifier}'")
             };
 
-        private static IDictionary<string, object> ReadMetadata(string input, int lineIndex, string line)
+        private static IDictionary<string, object> ReadMetadata(string input)
         {
             Dictionary<string, object> metadata = new();
-            var entries = input.Replace("(", "").Replace(")", "").Split(",", StringSplitOptions.TrimEntries).Select(x => x.Replace("]", "").Replace("[", "").Trim());
+            var entries = input
+                .Replace("(", "")
+                .Replace(")", "")
+                .Replace(Keywords.Metadata, string.Empty)
+                .Split(",", StringSplitOptions.TrimEntries)
+                .Select(x => x
+                    .Replace("]", "")
+                    .Replace("[", "")
+                    .Trim());
+
             foreach (string entry in entries)
             {
                 string[] tokens = entry.Split(":");
                 if (tokens.Length != 2)
-                    throw new InvalidSchemaException("Metadata entries should contain exactly two values.", lineIndex, line);
+                    Check.ThrowInvalidSchema("Metadata entries should contain exactly two values.");
 
                 string key = tokens[0];
                 if (key.StartsWith('"') && key.EndsWith('"'))
-                    key = key.Replace('"', '\0');
+                    key = key.Replace("\"", string.Empty);
                 else
-                    throw new InvalidSchemaException("Metadata keys can be only of type string.", lineIndex, line);
+                    Check.ThrowInvalidSchema("Metadata keys can be only of type string.");
 
-                object value = ParseMetadataValue(tokens[1], lineIndex, line);
+                object value = ParseMetadataValue(tokens[1]);
 
                 metadata[key] = value;
             }
@@ -220,10 +306,10 @@ namespace SchemaInterpreter.Parser.V1
             return metadata;
         }
 
-        private static object ParseMetadataValue(string input, int lineIndex, string line)
+        private static object ParseMetadataValue(string input)
         {
             if (input.Contains('"'))
-                return input.Replace('"', '\0');
+                return input.Replace("\"", string.Empty);
             else if (bool.TryParse(input, out bool boolValue))
                 return boolValue;
             else if (long.TryParse(input, out long longValue))
@@ -231,35 +317,26 @@ namespace SchemaInterpreter.Parser.V1
             else if (double.TryParse(input, out double doubleValue))
                 return doubleValue;
             else
-                throw new InvalidSchemaException("Metadata values can be only of string, boolean, int or float types.", lineIndex, line);
+                Check.ThrowInvalidSchema("Metadata values can be only of string, boolean, int or float types.");
+
+            return null;
         }
 
-        private static int? ReadVersion(string line, int lineIndex)
+        private static int? ReadVersion(string input)
         {
             try
             {
-                int version = int.Parse(line.Split("version:")[1]);
+                int version = int.Parse(input.Split("version:")[1]);
                 if (version != mCurrentVersion)
-                    throw new InvalidSchemaException($"Invalid version. Expected: 1 - Given: {version}", lineIndex, line);
+                    Check.ThrowInvalidSchema($"Invalid version. Expected: 1 - Given: {version}");
 
                 return version;
             }
             catch
             {
-                throw new InvalidSchemaException("Invalid version.", lineIndex, line);
+                Check.ThrowInvalidSchema("Invalid version declaration.");
+                return null;
             }
-        }
-
-        private static void CheckTypeFieldIndex(int index, string line, int lineIndex)
-        {
-            if (mCurrentTypeBuilder.ExistsIndex(index))
-                throw new InvalidSchemaException("Type field index already defined.", lineIndex, line);
-        }
-
-        private static void CheckTypeName(string name, string line, int lineIndex)
-        {
-            if (mTypes.Any(x => x.Name.ToLower() == name.ToLower()))
-                throw new InvalidSchemaException($"Type name {name} is already declared.", lineIndex, line);
         }
     }
 }

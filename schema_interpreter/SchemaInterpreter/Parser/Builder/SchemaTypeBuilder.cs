@@ -10,15 +10,17 @@ namespace SchemaInterpreter.Parser
     {
         private readonly IDictionary<int, SchemaTypeField> mFields;
         private string mTypeName;
+        private string mPackage;
         private SchemaTypeModifier? mModifier;
 
         public SchemaTypeModifier? Modifier => mModifier;
 
         public SchemaTypeBuilder() { }
 
-        public SchemaTypeBuilder(string typeName, SchemaTypeModifier? modifier) 
+        public SchemaTypeBuilder(string typeName, string package, SchemaTypeModifier? modifier) 
         {
             mTypeName = typeName;
+            mPackage = package;
             mModifier = modifier;
             mFields = new Dictionary<int, SchemaTypeField>();
         }
@@ -26,6 +28,12 @@ namespace SchemaInterpreter.Parser
         public SchemaTypeBuilder SetTypeName(string typeName)
         {
             mTypeName = typeName;
+            return this;
+        }
+
+        public SchemaTypeBuilder SetPackage(string package)
+        {
+            mPackage = package;
             return this;
         }
 
@@ -43,6 +51,6 @@ namespace SchemaInterpreter.Parser
 
         public bool ExistsIndex(int index) => mFields.ContainsKey(index);
 
-        public SchemaType Build() => new(mTypeName, mModifier, mFields.Values);
+        public SchemaType Build() => new(mTypeName, mPackage, mModifier, mFields.Values);
     }
 }

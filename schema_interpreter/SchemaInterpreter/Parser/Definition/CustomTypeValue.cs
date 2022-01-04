@@ -8,14 +8,14 @@
         /// <summary>
         /// The id of the type.
         /// </summary>
-        public int TypeId { get; }
+        public string TypeId { get; }
 
         /// <summary>
         /// The value type as a string.
         /// </summary>
         public string Value { get; }
 
-        public CustomTypeValue(int typeId, string value)
+        public CustomTypeValue(string typeId, string value)
         {
             TypeId = typeId;
             Value = value;

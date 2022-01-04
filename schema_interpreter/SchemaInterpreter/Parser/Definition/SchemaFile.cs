@@ -7,23 +7,26 @@ namespace SchemaInterpreter.Parser.Definition
     /// </summary>
     public class SchemaFile
     {
-        private readonly int mVersion;
-        private readonly IList<SchemaType> mTypes;
-
         /// <summary>
         /// The version of the schema.
         /// </summary>
-        public int Version => mVersion;
+        public int Version { get; }
 
         /// <summary>
         /// The list of types in the schema file.
         /// </summary>
-        public IList<SchemaType> Types => mTypes;
+        public IList<SchemaType> Types { get; }
 
-        public SchemaFile(int version, IList<SchemaType> types)
+        /// <summary>
+        /// The name of the file, a.k.a. package name.
+        /// </summary>
+        public string Name { get; }
+
+        public SchemaFile(string packageName, int version)
         {
-            mVersion = version;
-            mTypes = types;
+            Name = packageName;
+            Version = version;
+            Types = new List<SchemaType>();
         }
     }
 }

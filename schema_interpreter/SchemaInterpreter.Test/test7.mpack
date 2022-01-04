@@ -1,0 +1,12 @@
+﻿version:1
+
+type MyFancyType {
+	uid:string 0
+	my_value:MyFancyEnum 1 = MyFancyEnumerator.test
+}
+
+type MyFancyEnum enum {
+	unknown 0
+	test 1
+	fancy 2
+}

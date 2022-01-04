@@ -1,6 +1,6 @@
-﻿namespace SchemaInterpreter.Parser.Definition
+﻿namespace SchemaInterpreter.Parser
 {
-    public class SchemaLine
+    public class FileLine
     {
         /// <summary>
         /// The text of the line
@@ -17,7 +17,7 @@
         /// </summary>
         public string FileName { get; }
 
-        public SchemaLine(int lineIndex, string line, string fileName)
+        public FileLine(int lineIndex, string line, string fileName)
         {
             Line = line;
             LineIndex = lineIndex;

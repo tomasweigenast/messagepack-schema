@@ -18,9 +18,11 @@
 
         public static SchemaTypeFieldValueType Primitive(string typeName) => new PrimitiveSchemaFieldValueType(typeName);
 
-        public static SchemaTypeFieldValueType List(string elementTypeName) => new ListSchemaFieldValueType(elementTypeName);
+        public static SchemaTypeFieldValueType Custom(string typeName) => new CustomSchemaFieldValueType(typeName);
 
-        public static SchemaTypeFieldValueType Map(string keyTypeName, string valueTypeName) => new MapSchemaFieldValueType(keyTypeName, valueTypeName);
+        public static SchemaTypeFieldValueType List(SchemaTypeFieldValueType elementType) => new ListSchemaFieldValueType(elementType);
+
+        public static SchemaTypeFieldValueType Map(SchemaTypeFieldValueType keyType, SchemaTypeFieldValueType valueType) => new MapSchemaFieldValueType(keyType, valueType);
     }
 
     public class PrimitiveSchemaFieldValueType : SchemaTypeFieldValueType
@@ -28,16 +30,26 @@
         public PrimitiveSchemaFieldValueType(string valueType) : base(valueType) { }
     }
 
+    public class CustomSchemaFieldValueType : SchemaTypeFieldValueType
+    {
+        public string CustomType { get; }
+
+        public CustomSchemaFieldValueType(string customType) : base(SchemaFieldValueTypes.Custom) 
+        {
+            CustomType = customType;
+        }
+    }
+
     public class ListSchemaFieldValueType : SchemaTypeFieldValueType
     {
         /// <summary>
         /// The type of element the list holds.
         /// </summary>
-        public PrimitiveSchemaFieldValueType ElementType { get; }
+        public SchemaTypeFieldValueType ElementType { get; }
 
-        public ListSchemaFieldValueType(string elementType) : base(SchemaFieldValueTypes.List) 
+        public ListSchemaFieldValueType(SchemaTypeFieldValueType elementType) : base(SchemaFieldValueTypes.List) 
         {
-            ElementType = new PrimitiveSchemaFieldValueType(elementType);
+            ElementType = elementType;
         }
     }
 
@@ -46,17 +58,17 @@
         /// <summary>
         /// The type of element the map key holds.
         /// </summary>
-        public PrimitiveSchemaFieldValueType KeyType { get; }
+        public SchemaTypeFieldValueType KeyType { get; }
 
         /// <summary>
         /// The type of element the map value holds.
         /// </summary>
-        public PrimitiveSchemaFieldValueType ValueType { get; }
+        public SchemaTypeFieldValueType ValueType { get; }
 
-        public MapSchemaFieldValueType(string keyType, string valueType) : base(SchemaFieldValueTypes.Map)
+        public MapSchemaFieldValueType(SchemaTypeFieldValueType keyType, SchemaTypeFieldValueType valueType) : base(SchemaFieldValueTypes.Map)
         {
-            KeyType = new PrimitiveSchemaFieldValueType(keyType);
-            ValueType = new PrimitiveSchemaFieldValueType(valueType);
+            KeyType = keyType;
+            ValueType = valueType;
         }
     }
 }

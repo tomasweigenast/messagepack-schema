@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using SchemaInterpreter.Helpers;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SchemaInterpreter.Parser.Definition
@@ -13,7 +15,7 @@ namespace SchemaInterpreter.Parser.Definition
         private readonly int mIndex;
         private readonly bool mIsNullable;
         private readonly IEnumerable<KeyValuePair<string, object>> mMetadata;
-        private readonly SchemaLine mLine;
+        private readonly FileLine mLine;
 
         private object mDefaultValue;
         private bool mIsDefaultValueGenerated;
@@ -61,9 +63,9 @@ namespace SchemaInterpreter.Parser.Definition
         /// <summary>
         /// The line where the field is defined.
         /// </summary>
-        public SchemaLine Line => mLine;
+        public FileLine Line => mLine;
 
-        public SchemaTypeField(string name, int index, SchemaTypeFieldValueType valueType, object defaultValue, bool nullable, IEnumerable<KeyValuePair<string, object>> metadata, SchemaLine line)
+        public SchemaTypeField(string name, int index, SchemaTypeFieldValueType valueType, object defaultValue, bool nullable, IEnumerable<KeyValuePair<string, object>> metadata, FileLine line)
         {
             mIndex = index;
             mValueType = valueType;
@@ -89,5 +91,19 @@ namespace SchemaInterpreter.Parser.Definition
 
         public override string ToString() 
             => $"Field: {Name} - Index [{Index}] - Type [{ValueType}] - Default Value [{DefaultValue}] - Nullable [{IsNullable}] - Metadata [{Metadata.Select(x => $"{x.Key}:{x.Value}")}]";
+    
+        public static string GetId(string name)
+        {
+            if (name.Contains('.'))
+                name = name.Split('.')[1];
+
+            return CommonHelpers.CalculateMD5(name);
+        }
+
+        public static (string name, string package) GetNameAndPackage(string input)
+        {
+            string[] tokens = input.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            return (tokens[0], tokens.Length == 2 ? tokens[1] : null);
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using SchemaInterpreter.Helpers;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SchemaInterpreter.Parser.Definition
@@ -16,7 +17,7 @@ namespace SchemaInterpreter.Parser.Definition
         /// <summary>
         /// The id of the schema type based on the hashcode of the name.
         /// </summary>
-        public int Id => mName.ToLower().Normalize().GetHashCode();
+        public string Id => CommonHelpers.CalculateMD5(mName);
 
         /// <summary>
         /// The name of the type.
@@ -24,7 +25,7 @@ namespace SchemaInterpreter.Parser.Definition
         public string Name => mName;
 
         /// <summary>
-        /// The package of the type.
+        /// The package of the type. Its the name of the file.
         /// </summary>
         public string Package => mPackage;
 

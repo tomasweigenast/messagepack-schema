@@ -1,17 +1,20 @@
-﻿using System;
+﻿using SchemaInterpreter.Parser;
+using System;
 
 namespace SchemaInterpreter.Exceptions
 {
     public class InvalidSchemaException : Exception
     {
-        public string Line { get; set; }
+        /// <summary>
+        /// Information about the line where the error has been thrown.
+        /// </summary>
+        public FileLine Line { get; }
 
-        public int LineIndex { get; set; }
-
-        public InvalidSchemaException(string message, int lineIndex, string line) : base(message)
+        public InvalidSchemaException(string message, FileLine line) : base(message)
         {
             Line = line;
-            LineIndex = lineIndex; 
         }
+
+        public InvalidSchemaException(string message) : base(message) { }
     }
 }
