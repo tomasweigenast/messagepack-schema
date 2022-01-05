@@ -1,10 +1,9 @@
-﻿using SchemaInterpreter.Helpers;
+﻿using MessagePack;
+using MessagePack.Resolvers;
 using SchemaInterpreter.Parser.Definition;
-using SchemaInterpreter.Plugin.Encoder;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SchemaInterpreter.Plugin.Encoder
@@ -31,7 +30,7 @@ namespace SchemaInterpreter.Plugin.Encoder
                         { "name", type.Name },
                         { "package", type.Package },
                         { "fullName", type.FullName },
-                        { "modifier", WriteModifier(type.Modifier) },
+                        { "modifier", type.Modifier },
                     };
 
                     List<object> fields = new(type.Fields.Count);
@@ -59,21 +58,9 @@ namespace SchemaInterpreter.Plugin.Encoder
             }
 
             using MemoryStream stream = new();
-            await JsonSerializer.SerializeAsync(stream, entries);
+            await MessagePackSerializer.SerializeAsync(stream, entries, ContractlessStandardResolver.Options);
 
             return new ReadOnlyMemory<byte>(stream.GetBuffer());
-        }
-
-        private static string WriteModifier(SchemaTypeModifier? modifier)
-        {
-            if (modifier == null)
-                return null;
-
-            return modifier switch
-            {
-                SchemaTypeModifier.Enum => "enum",
-                _ => throw Check.Internal("Invalid type modifier")
-            };
         }
 
         public static object WriteValueType(SchemaTypeFieldValueType valueType)
