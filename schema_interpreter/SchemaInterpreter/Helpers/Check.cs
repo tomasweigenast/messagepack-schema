@@ -26,5 +26,10 @@ namespace SchemaInterpreter.Helpers
         {
             throw new Exception(message);
         }
+
+        public static Exception Internal(string message)
+        {
+            return new Exception(message);
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using SchemaInterpreter.Helpers;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace SchemaInterpreter.Parser.Definition
@@ -32,7 +33,7 @@ namespace SchemaInterpreter.Parser.Definition
         /// <summary>
         /// The list of fields in the type.
         /// </summary>
-        public IEnumerable<SchemaTypeField> Fields => mFields;
+        public IList<SchemaTypeField> Fields => mFields.OrderByDescending(x => x.Index).ToList().AsReadOnly();
 
         /// <summary>
         /// The modifier of the type.
