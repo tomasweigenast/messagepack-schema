@@ -42,7 +42,7 @@ namespace SchemaInterpreter.Plugin.Encoder
                             { "name", field.Name },
                             { "index", field.Index },
                             { "isNullable", field.IsNullable },
-                            { "valueType", WriteValueType(field.ValueType) },
+                            { "type", WriteValueType(field.ValueType) },
                             { "defaultValue", field.DefaultValue },
                             { "metadata", field.Metadata }
                         };
@@ -81,30 +81,30 @@ namespace SchemaInterpreter.Plugin.Encoder
             if (valueType is PrimitiveSchemaFieldValueType primitive)
                 return new Dictionary<string, object>
                 {
-                    { "valueType", "primitive" },
+                    { "dataType", "primitive" },
                     { "type", primitive.TypeName }
                 };
             else if (valueType is CustomSchemaFieldValueType custom)
                 return new Dictionary<string, object>
                 {
-                    { "valueType", custom.TypeName },
+                    { "dataType", custom.TypeName },
                     { "type", custom.CustomType }
                 };
             else if (valueType is ListSchemaFieldValueType list)
                 return new Dictionary<string, object>
                 {
-                    { "valueType", "list" },
+                    { "dataType", "list" },
                     { "elementType", list.ElementType.TypeName }
                 };
             else if (valueType is MapSchemaFieldValueType map)
                 return new Dictionary<string, object>
                 {
-                    { "valueType", "map" },
+                    { "dataType", "map" },
                     { "keyType", map.KeyType.TypeName },
                     { "valueType", map.ValueType.TypeName },
                 };
             else
-                return valueType.TypeName;
+                return null;
         }
     }
 }

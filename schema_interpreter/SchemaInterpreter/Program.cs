@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using SchemaInterpreter.Helpers;
 using SchemaInterpreter.Options;
 using SchemaInterpreter.Parser.V1;
 using SchemaInterpreter.Plugin;
@@ -20,17 +21,32 @@ namespace SchemaInterpreter
             });
 
             parser.ParseArguments(args, types)
-                .WithParsed((obj) => Run(obj).Wait());
+                .WithParsedAsync(RunAsync)
+                .Wait();
         }
 
-        private static async Task Run(object obj)
+        private static async Task RunAsync(object obj)
         {
-            switch (obj)
+            try
             {
-                case GenerateVerb t:
-                    var compiledFiles = await SchemaCompiler.CompileFiles(t.FilePath);
-                    await PluginManager.RunPluginAsync(t.PluginPath, compiledFiles, t.Encoding);
-                    break;
+                switch (obj)
+                {
+                    case GenerateVerb t:
+                        if (t.Verbose)
+                            Logger.SetMinimumLogLevel(LogLevel.Debug);
+
+                        var compiledFiles = await SchemaCompiler.CompileFiles(t.FilePath);
+                        Logger.Info($"Compiled {compiledFiles.Count()} file(s).");
+
+                        await PluginManager.RunPluginAsync(t.PluginPath, compiledFiles, t.Encoding);
+                        Logger.Info("Execution finished successfully.");
+                        break;
+                }
+            }
+            catch(Exception ex)
+            {
+                Logger.Error("An error occurred.");
+                Logger.Error(ex.ToString());
             }
         }
 

@@ -74,7 +74,7 @@ namespace SchemaInterpreter.Parser
             if (file == null)
                 Check.ThrowInternal($"Schema package '{package}' not found.");
 
-            file.Types.Add(type);
+            file.AddType(type);
         }
 
         /// <summary>
@@ -138,8 +138,12 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void GenerateDefaultValues()
         {
+            Logger.Debug("Generating default values.");
+
             foreach (SchemaTypeField field in mFiles.SelectMany(x => x.Types).SelectMany(x => x.Fields).Where(x => x.HasDefaultValue && !x.IsDefaultValueGenerated))
             {
+                Logger.Debug($"Generating default value for field {field.Name}.");
+
                 // Set the current line to the line where the field is declared
                 CurrentLine = field.Line;
 
@@ -154,18 +158,25 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void VerifyAllTypes()
         {
+            Logger.Debug("Running type verification.");
+
             foreach (SchemaTypeField field in mFiles.SelectMany(x => x.Types).Where(x => x.Modifier == null).SelectMany(x => x.Fields).Where(x => !SchemaFieldValueTypes.Primitives.Contains(x.ValueType.TypeName)))
             {
+                Logger.Debug($"Verifying field {field.Name}.");
+
                 CurrentLine = field.Line;
 
                 if(field.ValueType is ListSchemaFieldValueType listValue && listValue.ElementType is CustomSchemaFieldValueType elementType)
                 {
+                    Logger.Debug("Ensure list types.");
                     var (name, package) = SchemaTypeField.GetNameAndPackage(elementType.CustomType);
                     EnsureTypeId(SchemaTypeField.GetId(elementType.CustomType), name, package);
                 }
                 else if(field.ValueType is MapSchemaFieldValueType mapValue)
                 {
-                    if(mapValue.KeyType is CustomSchemaFieldValueType keyType)
+                    Logger.Debug("Ensuring map types.");
+
+                    if (mapValue.KeyType is CustomSchemaFieldValueType keyType)
                     {
                         var (name, package) = SchemaTypeField.GetNameAndPackage(keyType.CustomType);
                         EnsureTypeId(SchemaTypeField.GetId(keyType.CustomType), name, package);
@@ -179,6 +190,8 @@ namespace SchemaInterpreter.Parser
                 }
                 else if(field.ValueType is CustomSchemaFieldValueType customType)
                 {
+                    Logger.Debug("Ensuring custom type.");
+
                     var (name, package) = SchemaTypeField.GetNameAndPackage(customType.CustomType);
                     EnsureTypeId(SchemaTypeField.GetId(customType.CustomType), name, package);
                 }
@@ -190,6 +203,8 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void VerifyEnums()
         {
+            Logger.Debug("Verifying enum types.");
+
             foreach (SchemaType type in mFiles.SelectMany(x => x.Types).Where(x => x.Modifier == SchemaTypeModifier.Enum))
             {
                 if(type.Fields.First().Index != 0)
@@ -205,8 +220,7 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public IEnumerable<SchemaFile> GetCompiledAndClear()
         {
-            // Run last verification first.
-            VerifyAllTypes();
+            Logger.Debug("Compiling and clearing...");
 
             var files = mFiles.ToList();
             Clear();

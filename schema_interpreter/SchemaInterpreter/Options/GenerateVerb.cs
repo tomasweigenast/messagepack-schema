@@ -14,5 +14,8 @@ namespace SchemaInterpreter.Options
 
         [Option('p', "plugin", Required = true, HelpText = "The path to the plugin executable used to generate source code files.")]
         public string PluginPath { get; set; }
+
+        [Option("verbose", Default = false, HelpText = "Log debug messages.", Required = false)]
+        public bool Verbose { get; set; }
     }
 }

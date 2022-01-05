@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace SchemaInterpreter.Parser.Definition
 {
@@ -7,6 +8,8 @@ namespace SchemaInterpreter.Parser.Definition
     /// </summary>
     public class SchemaFile
     {
+        private IList<SchemaType> mTypes;
+
         /// <summary>
         /// The version of the schema.
         /// </summary>
@@ -15,7 +18,7 @@ namespace SchemaInterpreter.Parser.Definition
         /// <summary>
         /// The list of types in the schema file.
         /// </summary>
-        public IList<SchemaType> Types { get; }
+        public IList<SchemaType> Types => mTypes.OrderBy(x => x.FullName).ToList();
 
         /// <summary>
         /// The name of the file, a.k.a. package name.
@@ -26,7 +29,16 @@ namespace SchemaInterpreter.Parser.Definition
         {
             Name = packageName;
             Version = version;
-            Types = new List<SchemaType>();
+            mTypes = new List<SchemaType>();
+        }
+
+        /// <summary>
+        /// Adds a new type
+        /// </summary>
+        /// <param name="type">The type to add.</param>
+        public void AddType(SchemaType type)
+        {
+            mTypes.Add(type);
         }
     }
 }

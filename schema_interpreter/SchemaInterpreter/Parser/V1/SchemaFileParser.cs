@@ -58,6 +58,7 @@ namespace SchemaInterpreter.Parser.V1
                     if (line.StartsWith("version:"))
                     {
                         version = ReadVersion(line);
+                        Logger.Debug("Version read.");
                         continue;
                     }
                     else
@@ -71,6 +72,8 @@ namespace SchemaInterpreter.Parser.V1
                             {
                                 // Starts a new type
                                 case '{':
+                                    Logger.Debug("Detected new type. Reading...");
+
                                     if (ParserContext.Current.CurrentTypeBuilder != null)
                                         Check.ThrowInvalidSchema("When creating a type, closing tags should be present before creating a new one.");
 
@@ -81,6 +84,8 @@ namespace SchemaInterpreter.Parser.V1
 
                                 // Ends a type.
                                 case '}':
+                                    Logger.Debug("Detected end of new type. Building...");
+
                                     if (ParserContext.Current.CurrentTypeBuilder == null)
                                         Check.ThrowInvalidSchema("Before closing a type, a new one must be created.");
 
@@ -91,6 +96,8 @@ namespace SchemaInterpreter.Parser.V1
                                 default:
                                     if (ParserContext.Current.CurrentTypeBuilder == null)
                                         Check.ThrowInvalidSchema("Before specifying a field, a type must be created.");
+
+                                    Logger.Debug("Reading type field...");
 
                                     var typeField = ReadTypeField(line);
                                     ParserContext.Current.CurrentTypeBuilder.AddField(typeField);

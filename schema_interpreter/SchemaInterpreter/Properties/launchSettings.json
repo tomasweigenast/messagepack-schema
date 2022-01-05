@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SchemaInterpreter": {
+      "commandName": "Project",
+      "commandLineArgs": "generate -i test1.mpack -p \"C:\\Users\\Tomás Weigenast\\Desktop\\Tomás\\Git\\messagepack-schema\\schema_interpreter\\SchemaInterpreter.ExamplePlugin\\bin\\Debug\\net6.0\\SchemaInterpreter.ExamplePlugin.exe\" -e Json"
+    }
+  }
+}

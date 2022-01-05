@@ -4,17 +4,36 @@ namespace SchemaInterpreter.Helpers
 {
     public static class Logger
     {
-        public static void Info(string message) => Log(message, LogLevel.Info);
-        public static void Debug(string message) => Log(message, LogLevel.Debug);
-        public static void Warning(string message) => Log(message, LogLevel.Warning);
-        public static void Error(string message) => Log(message, LogLevel.Error);
+        private static LogLevel mMinimumLogLevel = LogLevel.Info;
 
-        private static void Log(string message, LogLevel level)
+        public static void Info(string message, string prefix = null) => Log(message, LogLevel.Info, prefix);
+        public static void Debug(string message, string prefix = null) => Log(message, LogLevel.Debug, prefix);
+        public static void Warning(string message, string prefix = null) => Log(message, LogLevel.Warning, prefix);
+        public static void Error(string message, string prefix = null) => Log(message, LogLevel.Error, prefix);
+
+        public static void SetMinimumLogLevel(LogLevel level)
         {
-            Console.ForegroundColor = level.GetColor();
-            Console.Write($"[{level.GetName()}]");
-            Console.ForegroundColor = ConsoleColor.White;
+            mMinimumLogLevel = level;
+        }
+
+        private static void Log(string message, LogLevel level, string prefix)
+        {
+            if (level < mMinimumLogLevel)
+                return;
+
+            ConsoleColor logColor = level.GetColor();
+            Console.ForegroundColor = logColor;
+            Console.Write($"[{level.GetName()}] ");
+
+            if(prefix != null)
+            {
+                Console.ForegroundColor = ConsoleColor.DarkCyan;
+                Console.Write($"[{prefix}] ");
+                Console.ForegroundColor = logColor;
+            }
+
             Console.WriteLine(message);
+            Console.ResetColor();
         }
 
         private static string GetName(this LogLevel level)
@@ -30,7 +49,7 @@ namespace SchemaInterpreter.Helpers
         private static ConsoleColor GetColor(this LogLevel level)
             => level switch
             {
-                LogLevel.Debug => ConsoleColor.Gray,
+                LogLevel.Debug => ConsoleColor.DarkGray,
                 LogLevel.Info => ConsoleColor.DarkGreen,
                 LogLevel.Warning => ConsoleColor.DarkYellow,
                 LogLevel.Error => ConsoleColor.DarkRed,
