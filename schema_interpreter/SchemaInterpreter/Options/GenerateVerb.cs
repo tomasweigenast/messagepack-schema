@@ -9,6 +9,9 @@ namespace SchemaInterpreter.Options
         [Option('i', "input", Required = true, HelpText = "The path to the file or directory containing files to generate.")]
         public string FilePath { get; set; }
 
+        [Option('o', "output", Required = true, HelpText = "The path to the folder where to generate the files.")]
+        public string OutputFolder { get; set; }
+
         [Option('e', "encoding", Required = false, HelpText = "Sets the encoding used to send the generated schema to the plugin.", Default = PluginEncoding.MessagePack)]
         public PluginEncoding Encoding { get; set; }
 

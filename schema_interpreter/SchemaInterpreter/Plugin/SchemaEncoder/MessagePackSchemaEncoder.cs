@@ -1,6 +1,7 @@
 ﻿using MessagePack;
 using MessagePack.Resolvers;
 using SchemaInterpreter.Parser.Definition;
+using SchemaInterpreter.Plugin.SchemaEncoder;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,9 +11,9 @@ namespace SchemaInterpreter.Plugin.Encoder
 {
     public class MessagePackSchemaEncoder : ISchemaEncoder
     {
-        public async Task<ReadOnlyMemory<byte>> Encode(IEnumerable<SchemaFile> files)
+        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, IEnumerable<SchemaFile> files)
         {
-            List<object> entries = new();
+            var schema = new PluginSendSchema();
             foreach(SchemaFile file in files)
             {
                 Dictionary<string, object> fileMap = new()
@@ -54,11 +55,11 @@ namespace SchemaInterpreter.Plugin.Encoder
                 }
 
                 fileMap["types"] = types;
-                entries.Add(fileMap);
+                schema.Types.Add(fileMap);
             }
 
             using MemoryStream stream = new();
-            await MessagePackSerializer.SerializeAsync(stream, entries, ContractlessStandardResolver.Options);
+            await MessagePackSerializer.SerializeAsync(stream, schema, ContractlessStandardResolver.Options);
 
             return new ReadOnlyMemory<byte>(stream.GetBuffer());
         }

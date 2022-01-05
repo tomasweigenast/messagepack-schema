@@ -1,6 +1,6 @@
 ﻿using SchemaInterpreter.Helpers;
 using SchemaInterpreter.Parser.Definition;
-using SchemaInterpreter.Plugin.Encoder;
+using SchemaInterpreter.Plugin.SchemaEncoder;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,10 +11,10 @@ namespace SchemaInterpreter.Plugin.Encoder
 {
     public class JsonSchemaEncoder : ISchemaEncoder
     {
-        public async Task<ReadOnlyMemory<byte>> Encode(IEnumerable<SchemaFile> files)
+        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, IEnumerable<SchemaFile> files)
         {
-            List<object> entries = new();
-            foreach(SchemaFile file in files)
+            var schema = new PluginSendSchema();
+            foreach (SchemaFile file in files)
             {
                 Dictionary<string, object> fileMap = new()
                 {
@@ -55,11 +55,11 @@ namespace SchemaInterpreter.Plugin.Encoder
                 }
 
                 fileMap["types"] = types;
-                entries.Add(fileMap);
+                schema.Types.Add(fileMap);
             }
 
             using MemoryStream stream = new();
-            await JsonSerializer.SerializeAsync(stream, entries);
+            await JsonSerializer.SerializeAsync(stream, schema);
 
             return new ReadOnlyMemory<byte>(stream.GetBuffer());
         }

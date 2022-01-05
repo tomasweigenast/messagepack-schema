@@ -21,10 +21,15 @@ namespace SchemaInterpreter.Plugin
         /// Runs a plugin passing compiled data
         /// </summary>
         /// <param name="path">The path to the binary.</param>
+        /// <param name="outputFolder">The path to the folder where to generate the files.</param>
         /// <param name="files">The list of files to serialize and send to the plugin.</param>
-        public static async Task RunPluginAsync(string path, IEnumerable<SchemaFile> files, PluginEncoding encoding)
+        public static async Task RunPluginAsync(string path, string outputFolder, IEnumerable<SchemaFile> files, PluginEncoding encoding)
         {
             Logger.Debug("Creating process info to run the plugin.");
+            if (CommonHelpers.IsDirectory(outputFolder) != true)
+                throw new InvalidOperationException("'output' must be a valid directory path.");
+
+            Logger.Debug($"Generating source files on {outputFolder}.");
 
             // Create a process to call the plugin
             Process process = new();
@@ -57,7 +62,7 @@ namespace SchemaInterpreter.Plugin
 
             // Serialize entries
             var encoder = mEncoders[encoding]();
-            var buffer = await encoder.Encode(files);
+            var buffer = await encoder.Encode(outputFolder, files);
 
             Logger.Debug($"Buffer size: {buffer.Length}");
             Logger.Debug("Writing buffer to the plugin...");

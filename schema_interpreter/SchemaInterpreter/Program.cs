@@ -38,7 +38,7 @@ namespace SchemaInterpreter
                         var compiledFiles = await SchemaCompiler.CompileFiles(t.FilePath);
                         Logger.Info($"Compiled {compiledFiles.Count()} file(s).");
 
-                        await PluginManager.RunPluginAsync(t.PluginPath, compiledFiles, t.Encoding);
+                        await PluginManager.RunPluginAsync(t.PluginPath, t.OutputFolder, compiledFiles, t.Encoding);
                         Logger.Info("Execution finished successfully.");
                         break;
                 }

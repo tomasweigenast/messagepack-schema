@@ -13,7 +13,8 @@ namespace SchemaInterpreter.Plugin.Encoder
         /// <summary>
         /// Encodes a list of schema files.
         /// </summary>
+        /// <param name="outputPath">The output path where to generate those files.</param>
         /// <param name="files">The files to encode.</param>
-        public Task<ReadOnlyMemory<byte>> Encode(IEnumerable<SchemaFile> files);
+        public Task<ReadOnlyMemory<byte>> Encode(string outputPath, IEnumerable<SchemaFile> files);
     }
 }
