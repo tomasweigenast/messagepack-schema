@@ -4,6 +4,14 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <DebugType>none</DebugType>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Authors>Tomás Weigenast</Authors>
+    <Product>MessagePackSchema</Product>
+    <Description>Runtime library for MessagePackcChema</Description>
+    <PackageProjectUrl>https://github.com/tomasweigenast/messagepack-schema</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tomasweigenast/messagepack-schema</RepositoryUrl>
+    <PackageLicenseExpression>GPL-3.0-only</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
