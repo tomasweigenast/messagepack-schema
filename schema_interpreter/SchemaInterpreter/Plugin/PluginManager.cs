@@ -1,6 +1,7 @@
 ﻿using SchemaInterpreter.Helpers;
 using SchemaInterpreter.Parser.Definition;
 using SchemaInterpreter.Plugin.Encoder;
+using SchemaInterpreter.Plugin.SchemaEncoder;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -73,11 +74,25 @@ namespace SchemaInterpreter.Plugin
             writer.Close();
 
             Logger.Debug("Waiting until the plugin ends...");
-            
+
             // Wait until the plugin finishes
-            await process.WaitForExitAsync();
+            var outputFiles = await PluginStdout.WaitForOutputAsync();
+            await WriteOutputFilesAsync(outputFiles);
 
             Logger.Debug("Plugin ended.");
+        }
+
+        private static async Task WriteOutputFilesAsync(PluginOutput output)
+        {
+            Logger.Debug($"Writing {output.Files.Count} output files.");
+
+            foreach(var file in output.Files)
+            {
+                using var fileStream = new FileStream(file.Path, FileMode.OpenOrCreate);
+                await fileStream.WriteAsync(file.Buffer.AsMemory(0, file.Buffer.Length));
+
+                Logger.Debug($"File '{file.Path}' wrote with {file.Buffer.Length} bytes.");
+            }
         }
     }
 }

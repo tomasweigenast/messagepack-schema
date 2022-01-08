@@ -1,11 +1,6 @@
 ﻿using SchemaInterpreter.Helpers;
 using SchemaInterpreter.Parser.Definition;
 using SchemaInterpreter.Plugin.SchemaEncoder;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace SchemaInterpreter.Plugin.Encoder
 {
@@ -13,7 +8,7 @@ namespace SchemaInterpreter.Plugin.Encoder
     {
         public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, IEnumerable<SchemaFile> files)
         {
-            var schema = new PluginSendSchema();
+            var schema = new PluginInterpretedSchema();
             foreach (SchemaFile file in files)
             {
                 Dictionary<string, object> fileMap = new()
