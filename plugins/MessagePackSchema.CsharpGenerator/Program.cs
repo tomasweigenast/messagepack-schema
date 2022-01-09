@@ -18,10 +18,23 @@ try
     while ((bytes = stdin.Read(buffer, 0, buffer.Length)) > 0)
         output.Write(buffer, 0, bytes);
 
-    MessagePackSerializer.Deserialize(buffer, MessagePackSerializerOptions.Standard);
+    var fields = GetSchemaFields(buffer);
 }
 catch (Exception ex)
 {
     PluginLogger.LogError("Could not execute plugin.");
     PluginLogger.LogError(ex.ToString());
+}
+
+static IEnumerable<SchemaField> GetSchemaFields(byte[] buffer)
+{
+    List<SchemaField> fields = new();
+    var reader = new MessagePackReader(buffer);
+    int filesCount = reader.ReadArrayHeader();
+    for (int i = 0; i < filesCount; i++)
+    {
+        fields.Add(MessagePackSerializer.Deserialize<SchemaField>(ref reader));
+    }
+
+    return fields;
 }

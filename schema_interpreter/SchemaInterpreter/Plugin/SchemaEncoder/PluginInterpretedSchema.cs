@@ -11,9 +11,9 @@ namespace SchemaInterpreter.Plugin.SchemaEncoder
     [MessagePackObject]
     public class PluginInterpretedSchema
     {
-        [JsonPropertyName("types")]
+        [JsonPropertyName("files")]
         [Key(0)]
-        public List<object> Types { get; set; }
+        public List<object> Files { get; set; }
 
         /// <summary>
         /// The encoding to use
@@ -26,7 +26,7 @@ namespace SchemaInterpreter.Plugin.SchemaEncoder
 
         public PluginInterpretedSchema()
         {
-            Types = new();
+            Files = new();
         }
     }
 }

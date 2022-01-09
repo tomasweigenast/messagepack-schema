@@ -8,38 +8,61 @@ namespace MessagePackSchema.CsharpGenerator
     /// </summary>
     public class SourceCodeWriter
     {
-        private readonly string mFileName;
-        private readonly FileModel mFileModel;
-        private readonly CsGenerator mGenerator;
-        private readonly IList<ClassModel> mClasses;
-
-        public SourceCodeWriter(string fileName)
+        public static IEnumerable<FileOutput> GenerateFiles(IEnumerable<SchemaFile> files)
         {
-            mFileName = fileName;
-            mGenerator = new();
-            mFileModel = new(fileName);
-            mClasses = new List<ClassModel>();
+            foreach(SchemaFile file in files)
+            {
+
+            }
         }
 
-        public void WriteUsingDirectives(List<string> directives)
+        private static FileOutput GenerateFile(SchemaFile file)
         {
-            mFileModel.LoadUsingDirectives(directives);
+            var types = file.Types?.First();
+
+            var usingDirectives = new string[]
+            {
+                "using System;",
+                "using MessagePack;",
+                "using MessagePackSchema.Runtime;",
+            };
+
+            string fileNamespace = $"MessagePackSchema.Generated";
+
+            var classModel = GetClassModel(file);
         }
 
-        public ClassModel WriteClass(string name, KeyWord[] keywords, string? baseClass = null, string[]? interfaces = null)
+        private static ClassModel GetClassModel(SchemaFile file)
         {
-            ClassModel classModel = new(name);
+            return new ClassModel(file.Name)
+            {
+                KeyWords = new List<KeyWord>()
+                {
+                    KeyWord.Partial,
+                },
+                Interfaces = new List<string>()
+                {
+                    $"ISchemaType<{file.Name}>",
+                },
+                DefaultConstructor = new Constructor(file.Name)
+                {
+                    IsVisible = true,
+                    AccessModifier = AccessModifier.Public,
+                    BodyLines = new List<string>()
+                    {
+                        "OnCreate();"
+                    }
+                }
+            };
+        }
 
-            if (baseClass != null)
-                classModel.BaseClass = baseClass;
+        private static IList<Field> GetFields(SchemaFile file)
+        {
+            var list = new List<Field>();
 
-            if (interfaces != null)
-                classModel.Interfaces = interfaces.ToList();
+            foreach(var )
 
-            classModel.KeyWords = keywords.ToList();
-            mClasses.Add(classModel);
-
-            return classModel;
+            return list;
         }
     }
 }

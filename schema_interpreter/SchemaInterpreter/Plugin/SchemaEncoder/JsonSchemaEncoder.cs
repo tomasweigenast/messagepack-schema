@@ -55,7 +55,7 @@ namespace SchemaInterpreter.Plugin.Encoder
                 }
 
                 fileMap["types"] = types;
-                schema.Types.Add(fileMap);
+                schema.Files.Add(fileMap);
             }
 
             using MemoryStream stream = new();
