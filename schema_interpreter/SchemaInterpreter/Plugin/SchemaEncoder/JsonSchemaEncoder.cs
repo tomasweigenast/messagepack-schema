@@ -1,14 +1,19 @@
 ﻿using SchemaInterpreter.Helpers;
 using SchemaInterpreter.Parser.Definition;
 using SchemaInterpreter.Plugin.SchemaEncoder;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace SchemaInterpreter.Plugin.Encoder
 {
     public class JsonSchemaEncoder : ISchemaEncoder
     {
-        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, IEnumerable<SchemaFile> files)
+        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, PluginEncoding encoding, IEnumerable<SchemaFile> files)
         {
-            var schema = new PluginInterpretedSchema();
+            var schema = new PluginInterpretedSchema { Encoding = encoding };
             foreach (SchemaFile file in files)
             {
                 Dictionary<string, object> fileMap = new()

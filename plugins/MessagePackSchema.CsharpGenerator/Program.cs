@@ -1,8 +1,9 @@
-﻿using MessagePackSchema.CsharpGenerator;
+﻿using MessagePack;
+using MessagePackSchema.CsharpGenerator;
 
 try
 {
-    // Log the name of the plugin to the compiler
+    // Send the name of the plugin to the compiler
     Console.WriteLine("plugin:csharp_generator");
 
     // Open stdin
@@ -12,10 +13,12 @@ try
     // Create a buffer to read
     byte[] buffer = new byte[2048];
     int bytes;
+
+    // Read the whole input
     while ((bytes = stdin.Read(buffer, 0, buffer.Length)) > 0)
         output.Write(buffer, 0, bytes);
 
-    PluginLogger.LogInfo("Generated files from buffer.");
+    MessagePackSerializer.Deserialize(buffer, MessagePackSerializerOptions.Standard);
 }
 catch (Exception ex)
 {

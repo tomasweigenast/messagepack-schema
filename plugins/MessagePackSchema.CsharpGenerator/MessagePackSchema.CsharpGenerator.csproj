@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="CsCodeGenerator" Version="2.0.0" />
+    <PackageReference Include="MessagePack" Version="2.3.85" />
   </ItemGroup>
 
 </Project>

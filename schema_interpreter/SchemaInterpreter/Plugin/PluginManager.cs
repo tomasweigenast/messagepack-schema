@@ -47,6 +47,7 @@ namespace SchemaInterpreter.Plugin
             Logger.Debug($"Running plugin {Path.GetFileName(path)}.");
 
             // Setup a standard output listener
+            PluginStdout.Encoding = encoding;
             process.OutputDataReceived += new DataReceivedEventHandler(PluginStdout.Listen);
 
             // Start the plugin
@@ -63,7 +64,7 @@ namespace SchemaInterpreter.Plugin
 
             // Serialize entries
             var encoder = mEncoders[encoding]();
-            var buffer = await encoder.Encode(outputFolder, files);
+            var buffer = await encoder.Encode(outputFolder, encoding, files);
 
             Logger.Debug($"Buffer size: {buffer.Length}");
             Logger.Debug("Writing buffer to the plugin...");

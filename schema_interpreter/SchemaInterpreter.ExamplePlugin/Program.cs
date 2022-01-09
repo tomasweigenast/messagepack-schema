@@ -1,4 +1,7 @@
-﻿using SchemaInterpreter.ExamplePlugin;
+﻿using MessagePack;
+using SchemaInterpreter.ExamplePlugin;
+using SchemaInterpreter.Plugin.SchemaEncoder;
+using System.Security.Cryptography;
 
 try
 {
@@ -15,8 +18,13 @@ try
     while ((bytes = stdin.Read(buffer, 0, buffer.Length)) > 0)
         output.Write(buffer, 0, bytes);
 
-    PluginLogger.LogInfo("Generated files from buffer.");
+    byte[] outputFileBuffer = new byte[2048];
+    PluginInterpretedSchema interpretedSchema = MessagePackSerializer.Deserialize<PluginInterpretedSchema>(buffer);
+    RandomNumberGenerator.Fill(outputFileBuffer);
 
+    PluginLogger.LogInfo("Generated files from buffer.");
+    using Stream stdout = Console.OpenStandardOutput();
+    stdout.Write(outputFileBuffer, 0, outputFileBuffer.Length);
 }
 catch (Exception ex)
 {
