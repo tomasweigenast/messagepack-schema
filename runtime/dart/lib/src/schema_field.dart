@@ -1,11 +1,22 @@
 part of '../messagepack_schema.dart';
 
-class _SchemaField<T> {
+class SchemaField<T> {
   final String name;
   final int index;
   final T? defaultValue;
-  
+  final SchemaFieldValueType valueType;
+
   T? value;
 
-  _SchemaField({required this.name, required this.index, required this.defaultValue});
+  SchemaField({required this.name, required this.index, required this.valueType, required this.defaultValue});
+}
+
+enum SchemaFieldValueType {
+  string,
+  int,
+  double,
+  boolean,
+  list,
+  map,
+  binary
 }
