@@ -5,18 +5,9 @@ class SchemaField<T> {
   final int index;
   final T? defaultValue;
   final SchemaFieldValueType valueType;
+  final bool isNullable;
 
   T? value;
 
-  SchemaField({required this.name, required this.index, required this.valueType, required this.defaultValue});
-}
-
-enum SchemaFieldValueType {
-  string,
-  int,
-  double,
-  boolean,
-  list,
-  map,
-  binary
+  SchemaField({required this.name, required this.index, required this.valueType, required this.isNullable, required this.defaultValue});
 }

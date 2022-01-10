@@ -1,6 +1,4 @@
-import 'dart:collection';
-
-import 'package:messagepack_schema/messagepack_schema.dart';
+part of '../messagepack_schema.dart';
 
 /// Contains all the fields in a type.
 class SchemaFieldSet<T> {
@@ -10,5 +8,6 @@ class SchemaFieldSet<T> {
 
   operator [](int i) => _fields[i];
 
-  Iterable<SchemaField> get fields => _fields.values;
+  /// Returns an iterable which contains the list of fields, sorted by index.
+  Iterable<SchemaField> get fields => _fields.entries.orderBy((element) => element.key).map((e) => e.value);
 }

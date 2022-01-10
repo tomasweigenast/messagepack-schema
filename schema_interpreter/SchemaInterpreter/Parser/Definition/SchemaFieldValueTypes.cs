@@ -1,4 +1,7 @@
-﻿namespace SchemaInterpreter.Parser.Definition
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+
+namespace SchemaInterpreter.Parser.Definition
 {
     public static class SchemaFieldValueTypes
     {
@@ -54,5 +57,25 @@
             Int32,
             Int64,
         };
+
+        public static readonly IDictionary<string, int> TypeCodes = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>()
+        {
+            { String, 1 },
+            { Uint8, 2 },
+            { Uint16, 3 },
+            { Uint32, 4 },
+            { Uint64, 5 },
+            { Int8, 6 },
+            { Int16, 7 },
+            { Int32, 8 },
+            { Int64, 9 },
+            { Float32, 10 },
+            { Float64, 11 },
+            { Boolean, 12 },
+            { Binary, 13 },
+            { List, 14 },
+            { Map, 15 },
+            { Custom, 16 },
+        });
     }
 }

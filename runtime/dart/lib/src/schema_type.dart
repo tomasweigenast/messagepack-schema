@@ -1,50 +1,150 @@
 part of '../messagepack_schema.dart';
 
-class SchemaType<T extends Object> {
-  final String _name;
-  final SchemaFieldSet<T> _fieldSet;
+abstract class SchemaType<T extends Object> {
+  // final SchemaFieldSet<T> _fieldSet;
 
-  const SchemaType(this._name, this._fieldSet);
+  // SchemaType(this._fieldSet);
+
+  /// Info about the current schema type. 
+  SchemaTypeInfo get info_;
+
+  /// Returns the name of the type.
+  String get name_ => info_.typeName;
 
   Uint8List toBuffer() {
     var packer = Packer();
 
-    for(var field in _fieldSet.fields) {
+    for(var field in info_.fieldSet.fields) {
       _packField(field, packer);
     }
 
     return packer.takeBytes();
   }
 
+  Map<String, Object?> toJson() {
+    return _toJson(info_.fieldSet);
+  }
+
+  SchemaType.fromBuffer(Uint8List buffer) {
+    mergeFromBuffer(buffer);
+  }
+  
+  void mergeFromBuffer(Uint8List buffer) {
+    _mergeBuffer(buffer);
+  }
+
+  void mergeFromJson(Map<String, Object> map) {
+
+  }
+
+  void _mergeBuffer(Uint8List buffer) {
+    var unpacker = Unpacker.fromList(buffer);
+    for(var field in info_.fieldSet.fields) {
+      _unpackField(field, unpacker);
+    }
+  }
+
+  dynamic _unpackField(SchemaField field, Unpacker unpacker) {
+    dynamic value = _unpackValue(field.valueType, unpacker);
+    _checkNullability(field, value);
+
+    field.value = value;
+
+    return value;
+  }
+
+  dynamic _unpackValue(SchemaFieldValueType valueType, Unpacker unpacker) {
+    switch(valueType.typeCode) {
+      case _SchemaFieldValueTypeCodes.stringType:
+        return unpacker.unpackString();
+
+      case _SchemaFieldValueTypeCodes.booleanType:
+        return unpacker.unpackBool();
+
+      case _SchemaFieldValueTypeCodes.intType:
+        return unpacker.unpackInt();
+
+      case _SchemaFieldValueTypeCodes.doubleType:
+        return unpacker.unpackDouble();
+
+      case _SchemaFieldValueTypeCodes.binaryType:
+        return Uint8List.fromList(unpacker.unpackBinary());
+
+      case _SchemaFieldValueTypeCodes.listType:
+        int listLength = unpacker.unpackListLength();
+        var outputList = [];
+        for(int i = 0; i < listLength; i++) {
+          outputList.add(_unpackValue((valueType as _ListFieldValueType).elementType, unpacker));
+        }
+
+        return outputList;
+
+      case _SchemaFieldValueTypeCodes.mapType:
+        int mapLength = unpacker.unpackMapLength();
+        var mapType = valueType as _MapFieldValueType;
+        return {for (var i = 0; i < mapLength; i++) _unpackValue(mapType.keyType, unpacker): _unpackValue(mapType.valueType, unpacker)};
+
+      case _SchemaFieldValueTypeCodes.customType:
+        return unpacker.unpackBinary();
+    }
+  }
+
   void _packField(SchemaField field, Packer packer) {
-    switch(field.valueType) {
-      case SchemaFieldValueType.string:
-        packer.packString(field.value);
+    _checkNullability(field, field.value);
+    _packValue(field.value, field.valueType, packer);
+  }
+
+  void _packValue(dynamic value, SchemaFieldValueType valueType, Packer packer) {
+    switch(valueType.typeCode) {
+      case _SchemaFieldValueTypeCodes.stringType:
+        packer.packString(value);
         break;
 
-      case SchemaFieldValueType.int:
-        packer.packInt(field.value);
+      case _SchemaFieldValueTypeCodes.booleanType:
+        packer.packBool(value);
         break;
 
-      case SchemaFieldValueType.double:
-        packer.packDouble(field.value);
+      case _SchemaFieldValueTypeCodes.intType:
+        packer.packInt(value);
         break;
 
-      case SchemaFieldValueType.boolean:
-        packer.packBool(field.value);
+      case _SchemaFieldValueTypeCodes.doubleType:
+        packer.packDouble(value);
         break;
 
-      case SchemaFieldValueType.binary:
-        packer.packBinary(field.value);
+      case _SchemaFieldValueTypeCodes.binaryType:
+        packer.packBinary(value);
         break;
 
-      case SchemaFieldValueType.list:
-        var list = field.value as List;
+      case _SchemaFieldValueTypeCodes.listType:
+        var list = value as List;
+        var listType = valueType as _ListFieldValueType;
         packer.packListLength(list.length);
-        for(var value in list) {
-          _packField(field, packer)
+        for(var listValue in list) {
+          _packValue(listValue, listType.elementType, packer);
         }
         break;
+
+      case _SchemaFieldValueTypeCodes.mapType:
+        var map = value as Map;
+        var mapType = valueType as _MapFieldValueType;
+        packer.packMapLength(map.length);
+        for(var mapEntry in map.entries) {
+          _packValue(mapEntry.key, mapType.keyType, packer);
+          _packValue(mapEntry.value, mapType.valueType, packer);
+        }
+        break;
+
+      case _SchemaFieldValueTypeCodes.customType:
+        var customType = value as SchemaType;
+        packer.packBinary(customType.toBuffer());
+        break;
+    }
+  }
+
+  void _checkNullability(SchemaField field, dynamic value){
+    if(!field.isNullable && value == null) {
+      throw NotNullError(fieldName: field.name, typeName: field.valueType.typeName);
     }
   }
 }
