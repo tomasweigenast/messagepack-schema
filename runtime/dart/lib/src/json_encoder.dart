@@ -3,7 +3,7 @@ part of '../messagepack_schema.dart';
 Map<String, Object?> _toJson(SchemaFieldSet fieldSet) {
   Map<String, Object?> output = {};
   for(var field in fieldSet.fields) {
-    output[field.name] = _writeValue(field.valueType, field.value);
+    output[field.dartName] = _writeValue(field.valueType, field.value);
   }
 
   return output;
@@ -52,12 +52,12 @@ Object _writeValue(SchemaFieldValueType valueType, dynamic value) {
 
 void _mergeJson(Map<String, Object?> map, SchemaFieldSet fieldSet) {
   for(var field in fieldSet.fields) {
-    Object? value = _readValue(map[field.name], field.valueType);
+    Object? value = _readValue(map[field.name], field.valueType, field.customBuilder);
     field.value = value ?? field.defaultValue;
   }
 }
 
-Object? _readValue(Object? value, SchemaFieldValueType valueType) {
+Object? _readValue(Object? value, SchemaFieldValueType valueType, CustomBuilder? builder) {
   switch(valueType.typeCode) {
     case _SchemaFieldValueTypeCodes.stringType:
       if(value is String) {
@@ -96,18 +96,27 @@ Object? _readValue(Object? value, SchemaFieldValueType valueType) {
       }
 
     case _SchemaFieldValueTypeCodes.listType:
-      var list = value as List;
-      var listType = valueType as _ListFieldValueType;
-      return list.map((e) => _writeValue(listType.elementType, e)).toList();
+      if(value is Iterable) {
+        var listType = valueType as _ListFieldValueType;
+        return value.map((e) => _readValue(value, listType.elementType, builder)).toList();
+      }
+
+      throw InvalidValueError("Expected iterable value.");
 
     case _SchemaFieldValueTypeCodes.mapType:
-      var map = value as Map;
-      var mapType = valueType as _MapFieldValueType;
-      return map.map((key, value) => MapEntry(_writeValue(mapType.keyType, key), _writeValue(mapType.valueType, value)));
+      if(value is Map) {
+        var mapType = valueType as _MapFieldValueType;
+        return value.map((key, value) => MapEntry(_readValue(key, mapType.keyType, builder), _readValue(value, mapType.valueType, builder)));
+      }
+
+      throw InvalidValueError("Expected map value.");
 
     case _SchemaFieldValueTypeCodes.customType:
-      var customType = value as SchemaType;
-      return customType.toJson();
+      if(value is Map && builder != null) {
+        return builder();
+      }
+
+      throw InvalidValueError("Expected custom type as map value.");
 
     default: 
       throw InvalidTypeError(valueType);

@@ -4,15 +4,19 @@ part of '../messagepack_schema.dart';
 class SchemaTypeInfo<T> {
   
   /// The name of the type
-  final String typeName;
+  late final String typeName;
 
   /// The package where the type is in.
-  final String package;
+  late final String package;
 
   /// The list of fields in the schema
   final SchemaFieldSet<T> fieldSet;
 
   String get fullName => "$package.$typeName";
 
-  SchemaTypeInfo({required this.typeName, required this.package, required this.fieldSet});
+  SchemaTypeInfo({required String fullName, required this.fieldSet}) {
+    var parts = fullName.split(".");
+    package = parts[0];
+    typeName = parts[1];
+  }
 }

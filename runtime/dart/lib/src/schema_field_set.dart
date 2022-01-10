@@ -4,9 +4,9 @@ part of '../messagepack_schema.dart';
 class SchemaFieldSet<T> {
   final Map<int, SchemaField> _fields;
 
-  const SchemaFieldSet(SplayTreeMap<int, SchemaField> fields) : _fields = fields;
+  SchemaFieldSet(Map<int, SchemaField> fields) : _fields = SplayTreeMap.from(fields);
 
-  operator [](int i) => _fields[i];
+  SchemaField? operator [](int i) => _fields[i];
 
   /// Returns an iterable which contains the list of fields, sorted by index.
   Iterable<SchemaField> get fields => _fields.entries.orderBy((element) => element.key).map((e) => e.value);

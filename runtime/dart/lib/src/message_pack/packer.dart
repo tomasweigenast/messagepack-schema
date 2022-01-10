@@ -66,23 +66,27 @@ class Packer {
 
   /// Explicitly pack null value.
   /// Other packXXX implicitly handle null values.
-  void packNull() {
+  Packer packNull() {
     if (_buf.length - _offset < 1) _nextBuf();
     _d.setUint8(_offset++, 0xc0);
+
+    return this;
   }
 
   /// Pack [bool] or `null`.
-  void packBool(bool? v) {
+  Packer packBool(bool? v) {
     if (_buf.length - _offset < 1) _nextBuf();
     if (v == null) {
       _d.setUint8(_offset++, 0xc0);
     } else {
       _d.setUint8(_offset++, v ? 0xc3 : 0xc2);
     }
+
+    return this;
   }
 
   /// Pack [int] or `null`.
-  void packInt(int? v) {
+  Packer packInt(int? v) {
     // max 8 byte int + 1 control byte
     if (_buf.length - _offset < 9) _nextBuf();
     if (v == null) {
@@ -124,19 +128,23 @@ class Packer {
       _d.setInt64(_offset, v);
       _offset += 8;
     }
+
+    return this;
   }
 
   /// Pack [double] or `null`.
-  void packDouble(double? v) {
+  Packer packDouble(double? v) {
     // 8 byte double + 1 control byte
     if (_buf.length - _offset < 9) _nextBuf();
     if (v == null) {
       _d.setUint8(_offset++, 0xc0);
-      return;
+      return this;
     }
     _d.setUint8(_offset++, 0xcb);
     _d.setFloat64(_offset, v);
     _offset += 8;
+
+    return this;
   }
 
   /// Pack [String] or `null`.
@@ -150,12 +158,12 @@ class Packer {
   /// ```
   /// - Empty and `null` distinguishable: no action required just save `p.packString(s)`.
   /// Throws [ArgumentError] if [String.length] exceed (2^32)-1.
-  void packString(String? v) {
+  Packer packString(String? v) {
     // max 4 byte str header + 1 control byte
     if (_buf.length - _offset < 5) _nextBuf();
     if (v == null) {
       _d.setUint8(_offset++, 0xc0);
-      return;
+      return this;
     }
     final encoded = _strCodec.encode(v);
     final length = encoded.length;
@@ -176,28 +184,17 @@ class Packer {
       throw ArgumentError('Max String length is 0xFFFFFFFF');
     }
     _putBytes(encoded);
-  }
 
-  /// Convenient function that call [packString(v)] by passing empty [String] as `null`.
-  ///
-  /// Convenient when you not distinguish between empty [String] and null on msgpack wire.
-  /// See [packString] method documentation for more details.
-  void packStringEmptyIsNull(String? v) {
-    if (v == null || v.isEmpty) {
-      packNull();
-    }
-    else {
-      packString(v);
-    }
+    return this;
   }
 
   /// Pack `List<int>` or null.
-  void packBinary(List<int>? buffer) {
+  Packer packBinary(List<int>? buffer) {
     // max 4 byte binary header + 1 control byte
     if (_buf.length - _offset < 5) _nextBuf();
     if (buffer == null) {
       _d.setUint8(_offset++, 0xc0);
-      return;
+      return this;
     }
     final length = buffer.length;
     if (length <= 0xFF) {
@@ -215,10 +212,12 @@ class Packer {
       throw ArgumentError('Max binary length is 0xFFFFFFFF');
     }
     _putBytes(buffer);
+
+    return this;
   }
 
   /// Pack [List.length] or `null`.
-  void packListLength(int? length) {
+  Packer packListLength(int? length) {
     // max 4 length header + 1 control byte
     if (_buf.length - _offset < 5) _nextBuf();
     if (length == null) {
@@ -236,10 +235,12 @@ class Packer {
     } else {
       throw ArgumentError('Max list length is 0xFFFFFFFF');
     }
+
+    return this;
   }
 
   /// Pack [Map.length] or `null`.
-  void packMapLength(int? length) {
+  Packer packMapLength(int? length) {
     // max 4 byte header + 1 control byte
     if (_buf.length - _offset < 5) _nextBuf();
     if (length == null) {
@@ -257,6 +258,8 @@ class Packer {
     } else {
       throw ArgumentError('Max map length is 0xFFFFFFFF');
     }
+
+    return this;
   }
 
   /// Get bytes representation of this packer.

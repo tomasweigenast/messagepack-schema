@@ -1,16 +1,23 @@
 part of '../messagepack_schema.dart';
 
 abstract class SchemaType<T extends Object> {
-  // final SchemaFieldSet<T> _fieldSet;
-
-  // SchemaType(this._fieldSet);
-
   /// Info about the current schema type. 
-  SchemaTypeInfo get info_;
+  SchemaTypeInfo<T> get info_;
 
   /// Returns the name of the type.
   String get name_ => info_.typeName;
 
+  SchemaType();
+
+  SchemaType.fromBuffer(Uint8List buffer) {
+    mergeFromBuffer(buffer);
+  }
+
+  SchemaType.fromJson(Map<String, Object?> json) {
+    mergeFromJson(json);
+  }
+
+  /// Writes the current type instance to a buffer.
   Uint8List toBuffer() {
     var packer = Packer();
 
@@ -21,20 +28,39 @@ abstract class SchemaType<T extends Object> {
     return packer.takeBytes();
   }
 
+  /// Serializes the current type instance to json.
   Map<String, Object?> toJson() {
     return _toJson(info_.fieldSet);
   }
-
-  SchemaType.fromBuffer(Uint8List buffer) {
-    mergeFromBuffer(buffer);
-  }
   
+  /// Subclasses internal use.
+  dynamic readValue_(int fieldIndex) {
+    var field = info_.fieldSet[fieldIndex];
+    if(field == null) {
+      throw UnknownTypeField(fieldIndex);
+    }
+
+    return field.value;
+  }
+
+  /// Subclasses internal use.
+  void setValue_(int fieldIndex, dynamic value) {
+    var field = info_.fieldSet[fieldIndex];
+    if(field == null) {
+      throw UnknownTypeField(fieldIndex);
+    }
+
+    field.value = value;
+  }
+
+  /// Merges a encoded messagepack buffer to the current type instance.
   void mergeFromBuffer(Uint8List buffer) {
     _mergeBuffer(buffer);
   }
 
-  void mergeFromJson(Map<String, Object> map) {
-
+  /// Merges a encoded JSON map to the current type instance.
+  void mergeFromJson(Map<String, Object?> map) {
+    _mergeJson(map, info_.fieldSet);
   }
 
   void _mergeBuffer(Uint8List buffer) {
