@@ -1,16 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-/// Streaming API for packing (serializing) data to msgpack binary format.
-///
-/// Packer provide API for manually packing your data item by item in serial / streaming manner.
-/// Use methods packXXX, where XXX is type names. Methods can take value and `null`.
-/// If `null` provided for packXXX method it will be packed to `null` implicitly.
-/// For explicitly packing `null` separate packNull function exist.
-///
-/// Streaming packing requires buffer to collect your data.
-/// Try to figure out the best initial size of this buffer, that minimal enough to fit your most common data packing scenario.
-/// Try to find balance. Provide this value in constructor [Packer()]
+// Messagepack library taken from https://github.com/nailgilaziev/messagepack
 class Packer {
   /// Provide the [_bufSize] size, that minimal enough to fit your most used data packets.
   /// Try to find balance, small buffer is good, and if most of your data will fit to it, performance will be good.

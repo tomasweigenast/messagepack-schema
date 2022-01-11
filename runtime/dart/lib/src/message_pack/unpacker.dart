@@ -1,12 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-/// Streaming API for unpacking (deserializing) data from msgpack binary format.
-///
-/// unpackXXX methods returns value if it exist, or `null`.
-/// Throws [FormatException] if value is not an requested type,
-/// but in that case throwing exception not corrupt internal state,
-/// so other unpackXXX methods can be called after that.
+// Messagepack library taken from https://github.com/nailgilaziev/messagepack
 class Unpacker {
   /// Manipulates with provided [Uint8List] to sequentially unpack values.
   /// Use [Unpaker.fromList()] to unpack raw `List<int>` bytes.
