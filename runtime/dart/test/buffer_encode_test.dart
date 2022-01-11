@@ -29,6 +29,7 @@ void main() {
         .packBool(true)
         .packBinary(Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]))
         .packInt(3)
+        .packNull()
         .takeBytes();
 
       ExampleType example = ExampleType(
@@ -71,6 +72,11 @@ void main() {
         .packBool(true)
         .packBinary(Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]))
         .packInt(2)
+        .packBinary(AnotherType(
+          stringValue: "amazing string from another type",
+          boolValue: false,
+          listDoubleValue: [25, 32.25, 65.23, 122.25]
+        ).toBuffer())
         .takeBytes();
 
       var decodedExample = ExampleType.createEmpty()..mergeFromBuffer(encodedBuffer);
@@ -83,6 +89,10 @@ void main() {
       expect(decodedExample.boolValue, equals(true));
       expect(decodedExample.binaryValue, equals([21, 51,51,12,15,12 ,12, 12,12,1,21]));
       expect(decodedExample.enumValue, equals(ExampleTypeEnum.second));
+      expect(decodedExample.anotherTypeValue, isNotNull);
+      expect(decodedExample.anotherTypeValue!.stringValue, equals("amazing string from another type"));
+      expect(decodedExample.anotherTypeValue!.boolValue, equals(false));
+      expect(decodedExample.anotherTypeValue!.listDoubleValue, equals([25, 32.25, 65.23, 122.25]));
     }, tags: ["decode"]);
   });
 }

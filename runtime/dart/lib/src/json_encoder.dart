@@ -3,14 +3,18 @@ part of '../messagepack_schema.dart';
 Map<String, Object?> _toJson(SchemaFieldSet fieldSet) {
   Map<String, Object?> output = {};
   for(var field in fieldSet.fields) {
-    Object value = _writeValue(field.valueType, fieldSet.value(field.index));
+    Object? value = _writeValue(field.valueType, fieldSet.value(field.index));
     output[field.dartName] = value;
   }
 
   return output;
 }
 
-Object _writeValue(SchemaFieldValueType valueType, dynamic value) {
+Object? _writeValue(SchemaFieldValueType valueType, dynamic value) {
+  if(value == null) {
+    return null;
+  }
+
   switch(valueType.typeCode) {
     case _SchemaFieldValueTypeCodes.booleanType:
       return value ? true : false;
@@ -44,7 +48,7 @@ Object _writeValue(SchemaFieldValueType valueType, dynamic value) {
     case _SchemaFieldValueTypeCodes.mapType:
       var map = value as Map;
       var mapType = valueType as _MapFieldValueType;
-      var newMap = <Object, Object>{};
+      var newMap = <Object, Object?>{};
       for(var entry in map.entries) {
         newMap[_convertToMapKey(mapType.keyType, entry.key)] = _writeValue(mapType.valueType, entry.value);
       }
@@ -93,16 +97,27 @@ void _mergeJson<T>(Map<String, Object?> map, SchemaFieldSet<T> fieldSet) {
         fieldSet.value(field.index).add(value);
       }
     } else if(mapValue is Map) {
-      var mapFieldType = field.valueType as _MapFieldValueType;
-      for(var entry in mapValue.entries) {
-        var key = _readMapKey(entry.key, mapFieldType.keyType);
-        var value = _readValue(entry.value, mapFieldType.valueType, false, null);
+      if(field.valueType.typeCode == _SchemaFieldValueTypeCodes.mapType) {
+        var mapFieldType = field.valueType as _MapFieldValueType;
+        for(var entry in mapValue.entries) {
+          var key = _readMapKey(entry.key, mapFieldType.keyType);
+          var value = _readValue(entry.value, mapFieldType.valueType, false, null);
 
-        fieldSet.value(field.index)[key] = value;
+          fieldSet.value(field.index)[key] = value;
+        }
+      } else {
+        SchemaType typeInstance = field.customBuilder!([]) as SchemaType;
+        typeInstance.mergeFromJson(mapValue.cast<String, Object>());
+
+        fieldSet.setValue(field.index, typeInstance);
       }
     } else {
       dynamic value = _readValue(mapValue, field.valueType, field.isNullable, field.customBuilder);
-      fieldSet.setValue(field.index, value ?? field.defaultValue);
+      if(value == null && !field.isNullable) {
+        value = field.defaultValue;
+      }
+
+      fieldSet.setValue(field.index, value);
     }
     
   }

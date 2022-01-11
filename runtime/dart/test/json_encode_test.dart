@@ -20,7 +20,17 @@ void main() {
         listDoubleValue: [12, 25, 354, 21, 215, 51, 2],
         boolValue: true,
         binaryValue: Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]),
-        enumValue: ExampleTypeEnum.randomValue
+        enumValue: ExampleTypeEnum.randomValue,
+        anotherTypeValue: AnotherType(
+          stringValue: "an amazing another type string value",
+          boolValue: false,
+          mapStringBoolValue: {
+            "first": true,
+            "me?": false,
+            "you?": true
+          }
+
+        )
       ).toJson();
 
       var expectedJson = {
@@ -34,7 +44,18 @@ void main() {
         },
         "boolValue": true,
         "binaryValue": base64.encode([21, 51,51, 12,15,12 ,12, 12,12,1,21]),
-        "enumValue": 3
+        "enumValue": 3,
+        "anotherTypeValue": {
+          "stringValue": "an amazing another type string value",
+          "boolValue": false,
+          "listDoubleValue": [],
+          "mapStringBoolValue": {
+            "first": true,
+            "me?": false,
+            "you?": true
+          },
+          "enumValue": null
+        }
       };
 
       expect(encodedJson, equals(expectedJson));
@@ -52,11 +73,21 @@ void main() {
         },
         "boolValue": true,
         "binaryValue": base64.encode([21, 51,51, 12,15,12 ,12, 12,12,1,21]),
-        "enumValue": 2
+        "enumValue": 2,
+        "anotherTypeValue": {
+          "stringValue": "an amazing another type string value",
+          "boolValue": false,
+          "listDoubleValue": [],
+          "mapStringBoolValue": {
+            "first": true,
+            "me?": false,
+            "you?": true
+          },
+          "enumValue": null
+        }
       }));
 
-      var decodedType = ExampleType.createEmpty();
-      decodedType.mergeFromJson(inputJson);
+      var decodedType = ExampleType.createEmpty()..mergeFromJson(inputJson);
       expect(decodedType.stringValue, equals("an amazing string value"));
       expect(decodedType.intValue, equals(36554654156153));
       expect(decodedType.doubleValue, equals(2121.215415183451));
@@ -65,6 +96,12 @@ void main() {
       expect(decodedType.boolValue, isTrue);
       expect(decodedType.binaryValue, equals(Uint8List.fromList([21, 51,51, 12,15,12 ,12, 12,12,1,21])));
       expect(decodedType.enumValue, equals(ExampleTypeEnum.second));
+      expect(decodedType.anotherTypeValue, isNotNull);
+      expect(decodedType.anotherTypeValue!.stringValue, equals("an amazing another type string value"));
+      expect(decodedType.anotherTypeValue!.boolValue, equals(false));
+      expect(decodedType.anotherTypeValue!.listDoubleValue, isEmpty);
+      expect(decodedType.anotherTypeValue!.mapStringBoolValue, equals({"first": true, "me?": false, "you?": true}));
+      expect(decodedType.anotherTypeValue!.enumValue, isNull);
     }, tags: "decode");
   });
 }

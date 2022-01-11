@@ -13,6 +13,8 @@ abstract class SchemaFieldValueType {
   static const SchemaFieldValueType boolean = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.booleanType, typeCode: _SchemaFieldValueTypeCodes.booleanType);
   static const SchemaFieldValueType binary = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.binaryType, typeCode: _SchemaFieldValueTypeCodes.binaryType);
   static const SchemaFieldValueType enumerator = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.enumType, typeCode: _SchemaFieldValueTypeCodes.enumType);
+  static const SchemaFieldValueType union = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.enumType, typeCode: _SchemaFieldValueTypeCodes.enumType);
+  
   factory SchemaFieldValueType.custom(String customTypeName) => _CustomFieldValueType(customTypeName: customTypeName);
   factory SchemaFieldValueType.list(SchemaFieldValueType elementType) => _ListFieldValueType(elementType: elementType);
   factory SchemaFieldValueType.map(SchemaFieldValueType keyType, SchemaFieldValueType valueType) => _MapFieldValueType(keyType: keyType, valueType: valueType);
@@ -62,6 +64,7 @@ class _SchemaFieldValueTypeCodes {
   static const int mapType = 15;
   static const int customType = 16;
   static const int enumType = 17;
+  static const int unionType = 18;
 }
 
 class _SchemaFieldValueTypeNames {
@@ -76,4 +79,5 @@ class _SchemaFieldValueTypeNames {
   static const String mapType = "map";
   static const String customType = "custom";
   static const String enumType = "enum";
+  static const String unionType = "union";
 }

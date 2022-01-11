@@ -122,7 +122,7 @@ abstract class SchemaType<T extends Object> {
         return unpacker.unpackDouble();
 
       case _SchemaFieldValueTypeCodes.binaryType:
-        return Uint8List.fromList(unpacker.unpackBinary());
+        return unpacker.unpackBinary();
 
       case _SchemaFieldValueTypeCodes.listType:
         int listLength = unpacker.unpackListLength();
@@ -139,11 +139,16 @@ abstract class SchemaType<T extends Object> {
         return {for (var i = 0; i < mapLength; i++) _unpackValue(mapType.keyType, unpacker, null): _unpackValue(mapType.valueType, unpacker, null)};
 
       case _SchemaFieldValueTypeCodes.enumType:
-        int enumValue = unpacker.unpackInt()!;
+        int? enumValue = unpacker.unpackInt();
+        if(enumValue == null) {
+          return null;
+        }
+        
         return builder!([enumValue]);
 
       case _SchemaFieldValueTypeCodes.customType:
-        return unpacker.unpackBinary();
+        SchemaType type = builder!([]);
+        return type..mergeFromBuffer(unpacker.unpackBinary());
     }
   }
 
@@ -195,13 +200,21 @@ abstract class SchemaType<T extends Object> {
         break;
 
       case _SchemaFieldValueTypeCodes.enumType:
-        var enumerator = value as SchemaTypeEnum;
-        packer.packInt(enumerator.index);
+        if(value == null) {
+          packer.packNull();
+        } else {
+          var enumerator = value as SchemaTypeEnum;
+          packer.packInt(enumerator.index);
+        }
         break;
 
       case _SchemaFieldValueTypeCodes.customType:
-        var customType = value as SchemaType;
-        packer.packBinary(customType.toBuffer());
+        if(value == null){
+          packer.packNull();
+        } else {
+          var customType = value as SchemaType;
+          packer.packBinary(customType.toBuffer());
+        }
         break;
     }
   }

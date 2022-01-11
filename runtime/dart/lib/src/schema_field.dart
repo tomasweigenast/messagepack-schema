@@ -69,6 +69,18 @@ class SchemaField<T> {
     );
   }
 
+  static SchemaField<TType> type<TType extends SchemaType>(String fieldName, String dartName, String typeName, int index, bool isNullable, TType Function() customBuilder) {
+    return SchemaField<TType>._internal(
+      name: fieldName,
+      dartName: dartName,
+      index: index,
+      valueType: SchemaFieldValueType.custom(typeName),
+      isNullable: isNullable,
+      defaultValue: customBuilder(),
+      customBuilder: (_) => customBuilder()
+    );
+  }
+
   SchemaField<T> withoutValue() {
     return SchemaField._internal(name: name, dartName: dartName, index: index, valueType: valueType, isNullable: isNullable, defaultValue: defaultValue, customBuilder: customBuilder);
   }

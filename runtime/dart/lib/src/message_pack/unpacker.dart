@@ -197,7 +197,7 @@ class Unpacker {
   ///
   /// Encoded in msgpack packet null unpacks to [List] with 0 length for convenience.
   /// Throws [FormatException] if value is not a binary.
-  List<int> unpackBinary() {
+  Uint8List unpackBinary() {
     final b = _d.getUint8(_offset);
     int len;
     if (b == 0xc4) {
@@ -218,7 +218,7 @@ class Unpacker {
     final data =
         Uint8List.view(_list.buffer, _list.offsetInBytes + _offset, len);
     _offset += len;
-    return data.toList();
+    return data;
   }
 
   Object? _unpack() {
