@@ -73,69 +73,13 @@ class ExampleType extends SchemaType<ExampleType> {
   static final SchemaTypeInfo<ExampleType> _exampleTypeInfo = SchemaTypeInfo(
     fullName: "example.Example",
     fieldSet: SchemaFieldSet({
-      0: SchemaField<String>(
-        name: "string_value", 
-        dartName: "stringValue",
-        index: 0, 
-        valueType: SchemaFieldValueType.string, 
-        isNullable: false, 
-        defaultValue: null, 
-        customBuilder: null
-      ),
-      1: SchemaField<int>(
-        name: "int_value",
-        dartName: "intValue",
-        index: 1,
-        valueType: SchemaFieldValueType.int64,
-        isNullable: false,
-        customBuilder: null,
-        defaultValue: null
-      ),
-      2: SchemaField<double>(
-        name: "double_value",
-        dartName: "doubleValue",
-        index: 2,
-        valueType: SchemaFieldValueType.float64,
-        isNullable: false,
-        defaultValue: null,
-        customBuilder: null
-      ),
-      3: SchemaField<List<double>>(
-        name: "list_double_value",
-        index: 3,
-        dartName: "listDoubleValue",
-        valueType: SchemaFieldValueType.list(SchemaFieldValueType.float64),
-        isNullable: true,
-        defaultValue: null,
-        customBuilder: null
-      ),
-      4: SchemaField<Map<int, String>>(
-        name: "map_int_string_value",
-        index: 4,
-        dartName: "mapIntStringValue",
-        valueType: SchemaFieldValueType.map(SchemaFieldValueType.int64, SchemaFieldValueType.string),
-        isNullable: true,
-        defaultValue: null,
-        customBuilder: null
-      ),
-      5: SchemaField<bool>(
-        name: "bool_value",
-        dartName: "boolValue",
-        index: 5,
-        valueType: SchemaFieldValueType.boolean,
-        isNullable: false,
-        customBuilder: null,
-        defaultValue: null
-      ),
-      6: SchemaField<Uint8List>(
-        name: "binary_value",
-        dartName: "binaryValue",
-        index: 6,
-        valueType: SchemaFieldValueType.binary,
-        isNullable: false,
-        customBuilder: null,
-        defaultValue: null
-      )
+      0: SchemaField<String>("string_value", "stringValue", 0, SchemaFieldValueType.string, false, null, null),
+      1: SchemaField<int>("int_value", "intValue", 1, SchemaFieldValueType.int64, false, null, null),
+      2: SchemaField<double>("double_value", "doubleValue", 2, SchemaFieldValueType.float64, false, null, null),
+      3: SchemaField.list<double>("list_double_value", "listDoubleValue", 3, SchemaFieldValueType.float64, null),
+      4: SchemaField.map<int, String>("map_int_string_value", "mapIntStringValue", 4, SchemaFieldValueType.int64, SchemaFieldValueType.string, null),
+      5: SchemaField<bool>("bool_value", "boolValue", 5,  SchemaFieldValueType.boolean, false, null, null),
+      6: SchemaField<Uint8List>("binary_value", "binaryValue", 6, SchemaFieldValueType.binary, false, null, null)
     })
   );
   

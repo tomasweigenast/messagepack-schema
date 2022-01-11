@@ -2,7 +2,6 @@ library messagepack_schema;
 
 import 'dart:collection';
 import 'dart:convert';
-import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:messagepack_schema/src/errors/double_not_infinite_error.dart';
