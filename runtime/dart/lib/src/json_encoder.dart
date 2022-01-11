@@ -77,19 +77,35 @@ String _convertToMapKey(SchemaFieldValueType valueType, Object value) {
 
 void _mergeJson<T>(Map<String, Object?> map, SchemaFieldSet<T> fieldSet) {
   for(var field in fieldSet.fields) {
-    Object? value = _readValue(map[field.dartName], field.valueType, field.isNullable, field.customBuilder);
-    if(value is Iterable) {
-      field.value = _getList(field.valueType as _ListFieldValueType);
-      print(value.runtimeType);
-      print(field.value.runtimeType);
-      (field.value as List).addAll(value);
+    
+    // ignore the json does not contains the field name
+    if(!map.containsKey(field.dartName)) {
+      continue;
+    }
+
+    dynamic mapValue = map[field.dartName];
+    if(mapValue is List) {
+      for(int i = 0; i < mapValue.length; i++) {
+        var value = _readValue(mapValue[i], (field.valueType as _ListFieldValueType).elementType, false, field.customBuilder);
+        field.value.add(value);
+      }
+    } else if(mapValue is Map) {
+      var mapFieldType = field.valueType as _MapFieldValueType;
+      for(var entry in mapValue.entries) {
+        var key = _readMapKey(entry.key, mapFieldType.keyType);
+        var value = _readValue(entry.value, mapFieldType.valueType, false, null);
+
+        field.value[key] = value;
+      }
     } else {
+      dynamic value = _readValue(mapValue, field.valueType, field.isNullable, field.customBuilder);
       field.value = value ?? field.defaultValue;
     }
+    
   }
 }
 
-Object? _readValue(Object? value, SchemaFieldValueType valueType, bool nullable, CustomBuilder? builder) {
+dynamic _readValue(Object? value, SchemaFieldValueType valueType, bool nullable, CustomBuilder? builder) {
   if(value == null) {
     return null;
   }
@@ -160,6 +176,36 @@ Object? _readValue(Object? value, SchemaFieldValueType valueType, bool nullable,
 
     default: 
       throw InvalidTypeError(valueType);
+  }
+}
+
+dynamic _readMapKey(Object? key, SchemaFieldValueType keyType) {
+  switch(keyType.typeCode) {
+    case _SchemaFieldValueTypeCodes.booleanType:
+      switch(key) {
+        case 'true': return true;
+        case 'false': return false;
+        default: throw StateError("Invalid boolean value. Given: $key");
+      }
+
+    case _SchemaFieldValueTypeCodes.stringType:
+      return key;
+
+    case _SchemaFieldValueTypeCodes.intType:
+      try {
+        return int.parse(key as String);
+      } catch(_) {
+        throw StateError("Invalid int as string value. Given: $key");
+      }
+
+    case _SchemaFieldValueTypeCodes.doubleType:
+      try {
+        return double.parse(key as String);
+      } catch(_) {
+        throw StateError("Invalid double as string value. Given: $key");
+      }
+
+    default: throw StateError("Not a valid key type: $keyType");
   }
 }
 

@@ -4,10 +4,15 @@ part of '../messagepack_schema.dart';
 class SchemaFieldSet<T> {
   final Map<int, SchemaField> _fields;
 
-  SchemaFieldSet(Map<int, SchemaField> fields) : _fields = SplayTreeMap.from(fields);
+  SchemaFieldSet(Map<int, SchemaField> fields) 
+    : _fields = SplayTreeMap.from(fields);
 
   SchemaField? operator [](int i) => _fields[i];
 
   /// Returns an iterable which contains the list of fields, sorted by index.
   Iterable<SchemaField> get fields => _fields.entries.orderBy((element) => element.key).map((e) => e.value);
+
+  SchemaFieldSet<T> clone() {
+    return SchemaFieldSet<T>(_fields.map((key, value) => MapEntry(key, value.withoutValue())));
+  }
 }

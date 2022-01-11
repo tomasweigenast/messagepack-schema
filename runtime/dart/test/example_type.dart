@@ -1,52 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:collection/collection.dart';
-import 'package:test/test.dart';
 import 'package:messagepack_schema/messagepack_schema.dart';
-import 'package:messagepack_schema/src/message_pack/packer.dart';
-
-void main() {
-  test("Test buffer encode", () {
-    var expectedBuffer = Packer()
-      .packString("an amazing string value")
-      .packInt(36554654156153)
-      .packDouble(2121.215415183451)
-      .packListLength(7)
-      .packDouble(12)
-      .packDouble(25)
-      .packDouble(354)
-      .packDouble(21)
-      .packDouble(215)
-      .packDouble(51)
-      .packDouble(2)
-      .packMapLength(2)
-      .packInt(5)
-      .packString("an amazing 5 value")
-      .packInt(2158451)
-      .packString("an amazing (maybe) long value")
-      .takeBytes();
-
-      // TODO: Finish test
-
-    ExampleType example = ExampleType(
-      stringValue: "an amazing string value", 
-      intValue: 36554654156153, 
-      doubleValue: 2121.215415183451,
-      mapIntStringValue: {
-        5: "an amazing 5 value",
-        2158451: "an amazing (maybe) long value"
-      },
-      listDoubleValue: [12, 25, 354, 21, 215, 51, 2],
-      boolValue: true,
-      binaryValue: Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]),
-    );
-
-    var buffer = example.toBuffer();
-    var deepEquals = const DeepCollectionEquality().equals;
-
-    expect(deepEquals(buffer, expectedBuffer), true);
-  });
-}
 
 class ExampleType extends SchemaType<ExampleType> {
   static final SchemaTypeInfo<ExampleType> _exampleTypeInfo = SchemaTypeInfo(
@@ -96,8 +50,7 @@ class ExampleType extends SchemaType<ExampleType> {
     Map<int, String>? mapIntStringValue,
     required Uint8List binaryValue,
     required bool boolValue}) {
-    var instance = ExampleType.createEmpty();
-
+    var instance = createEmpty();
     instance.stringValue = stringValue;
     instance.intValue = intValue;
     instance.doubleValue = doubleValue;
@@ -109,5 +62,7 @@ class ExampleType extends SchemaType<ExampleType> {
     return instance;
   }
 
-  factory ExampleType.createEmpty() => ExampleType._();
+  static ExampleType createEmpty() {
+    return ExampleType._();
+  }
 }

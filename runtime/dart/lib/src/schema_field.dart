@@ -57,6 +57,10 @@ class SchemaField<T> {
       customBuilder: customBuilder
     );
   }
+
+  SchemaField<T> withoutValue() {
+    return SchemaField._internal(name: name, dartName: dartName, index: index, valueType: valueType, isNullable: isNullable, defaultValue: defaultValue, customBuilder: customBuilder);
+  }
 }
 
 T _findDefaultValue<T>() {
@@ -65,7 +69,7 @@ T _findDefaultValue<T>() {
     case int: 
       return 0 as T;
     case double: 
-      return 0 as T;
+      return 0.0 as T;
 
     case bool:
       return false as T;

@@ -15,6 +15,9 @@ abstract class SchemaFieldValueType {
   factory SchemaFieldValueType.custom(String customTypeName) => _CustomFieldValueType(customTypeName: customTypeName);
   factory SchemaFieldValueType.list(SchemaFieldValueType elementType) => _ListFieldValueType(elementType: elementType);
   factory SchemaFieldValueType.map(SchemaFieldValueType keyType, SchemaFieldValueType valueType) => _MapFieldValueType(keyType: keyType, valueType: valueType);
+
+  @override
+  String toString() => "$typeName ($typeCode)";
 }
 
 class _PrimitiveFieldValueType extends SchemaFieldValueType {
@@ -25,6 +28,9 @@ class _ListFieldValueType extends SchemaFieldValueType {
   final SchemaFieldValueType elementType;
   
   const _ListFieldValueType({required this.elementType}) : super(typeName: _SchemaFieldValueTypeNames.listType, typeCode: _SchemaFieldValueTypeCodes.listType);
+
+  @override
+  String toString() => "list($elementType)";
 }
 
 class _MapFieldValueType extends SchemaFieldValueType {
@@ -32,6 +38,9 @@ class _MapFieldValueType extends SchemaFieldValueType {
   final SchemaFieldValueType valueType;
 
   const _MapFieldValueType({required this.keyType, required this.valueType}) : super(typeName: _SchemaFieldValueTypeNames.mapType, typeCode: _SchemaFieldValueTypeCodes.mapType);
+
+  @override
+  String toString() => "map($keyType,$valueType)";
 }
 
 class _CustomFieldValueType extends SchemaFieldValueType {

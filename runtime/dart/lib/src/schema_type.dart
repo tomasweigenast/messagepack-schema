@@ -4,10 +4,17 @@ abstract class SchemaType<T extends Object> {
   /// Info about the current schema type. 
   SchemaTypeInfo<T> get info_;
 
+  /// The list of fields
+  late final SchemaFieldSet<T> _fieldSet;
+
   /// Returns the name of the type.
   String get name_ => info_.typeName;
 
-  SchemaType();
+  @mustCallSuper
+  SchemaType() {
+    _fieldSet = info_.fieldSet.clone();
+    _ensureNotNulls();
+  }
 
   SchemaType.fromBuffer(Uint8List buffer) {
     mergeFromBuffer(buffer);
@@ -21,7 +28,7 @@ abstract class SchemaType<T extends Object> {
   Uint8List toBuffer() {
     var packer = Packer();
 
-    for(var field in info_.fieldSet.fields) {
+    for(var field in _fieldSet.fields) {
       _packField(field, packer);
     }
 
@@ -30,12 +37,12 @@ abstract class SchemaType<T extends Object> {
 
   /// Serializes the current type instance to json.
   Map<String, Object?> toJson() {
-    return _toJson(info_.fieldSet);
+    return _toJson(_fieldSet);
   }
   
   /// Subclasses internal use.
   dynamic readValue_(int fieldIndex) {
-    var field = info_.fieldSet[fieldIndex];
+    var field = _fieldSet[fieldIndex];
     if(field == null) {
       throw UnknownTypeField(fieldIndex);
     }
@@ -43,9 +50,15 @@ abstract class SchemaType<T extends Object> {
     return field.value;
   }
 
+  void _ensureNotNulls() {
+    for(var field in _fieldSet._fields.values.where((element) => !element.isNullable && element.value == null && element.defaultValue != null)) {
+      field.value = field.defaultValue;
+    }
+  }
+
   /// Subclasses internal use.
   void setValue_(int fieldIndex, dynamic value) {
-    var field = info_.fieldSet[fieldIndex];
+    var field = _fieldSet[fieldIndex];
     if(field == null) {
       throw UnknownTypeField(fieldIndex);
     }
@@ -60,12 +73,12 @@ abstract class SchemaType<T extends Object> {
 
   /// Merges a encoded JSON map to the current type instance.
   void mergeFromJson(Map<String, Object?> map) {
-    _mergeJson<T>(map, info_.fieldSet);
+    _mergeJson<T>(map, _fieldSet);
   }
 
   void _mergeBuffer(Uint8List buffer) {
     var unpacker = Unpacker.fromList(buffer);
-    for(var field in info_.fieldSet.fields) {
+    for(var field in _fieldSet.fields) {
       _unpackField(field, unpacker);
     }
   }
