@@ -60,7 +60,7 @@ abstract class SchemaType<T extends Object> {
 
   /// Merges a encoded JSON map to the current type instance.
   void mergeFromJson(Map<String, Object?> map) {
-    _mergeJson(map, info_.fieldSet);
+    _mergeJson<T>(map, info_.fieldSet);
   }
 
   void _mergeBuffer(Uint8List buffer) {

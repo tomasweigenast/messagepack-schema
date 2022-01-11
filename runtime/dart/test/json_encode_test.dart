@@ -6,37 +6,66 @@ import 'package:messagepack_schema/messagepack_schema.dart';
 import 'package:test/test.dart';
 
 void main() {
-  test("Test json encode", () {
-    var expectedJson = {
-      "stringValue": "an amazing string value",
-      "intValue": 36554654156153,
-      "doubleValue": 2121.215415183451,
-      "listDoubleValue": [12, 25, 354, 21, 215, 51, 2],
-      "mapIntStringValue": {
-        5: "an amazing 5 value",
-        2158451: "an amazing (maybe) long value"
-      },
-      "boolValue": true,
-      "binaryValue": base64.encode([21, 51,51, 12,15,12 ,12, 12,12,1,21]),
-    };
+  group("Test encoding and decoding to/from json", () {
+    late ExampleType example;
+    var collectionEquals = const DeepCollectionEquality().equals;
 
-    ExampleType example = ExampleType(
-      stringValue: "an amazing string value", 
-      intValue: 36554654156153, 
-      doubleValue: 2121.215415183451,
-      mapIntStringValue: {
-        5: "an amazing 5 value",
-        2158451: "an amazing (maybe) long value"
-      },
-      listDoubleValue: [12, 25, 354, 21, 215, 51, 2],
-      boolValue: true,
-      binaryValue: Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]),
-    );
+    setUp(() {
+      example = ExampleType(
+        stringValue: "an amazing string value", 
+        intValue: 36554654156153, 
+        doubleValue: 2121.215415183451,
+        mapIntStringValue: {
+          5: "an amazing 5 value",
+          2158451: "an amazing (maybe) long value"
+        },
+        listDoubleValue: [12, 25, 354, 21, 215, 51, 2],
+        boolValue: true,
+        binaryValue: Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]),
+      );
+    });
 
-    var encodedJson = example.toJson();
-    var deepEquals = const DeepCollectionEquality().equals;
+    test("Test json encode", () {
+      var expectedJson = {
+        "stringValue": "an amazing string value",
+        "intValue": 36554654156153,
+        "doubleValue": 2121.215415183451,
+        "listDoubleValue": [12, 25, 354, 21, 215, 51, 2],
+        "mapIntStringValue": {
+          "5": "an amazing 5 value",
+          "2158451": "an amazing (maybe) long value"
+        },
+        "boolValue": true,
+        "binaryValue": base64.encode([21, 51,51, 12,15,12 ,12, 12,12,1,21]),
+      };
 
-    expect(deepEquals(encodedJson, expectedJson), true);
+      var encodedJson = example.toJson();
+      expect(collectionEquals(encodedJson, expectedJson), true);
+    }, tags: "encode");
+
+    test("Test json decode", () {
+      var inputJson = {
+        "stringValue": "an amazing string value",
+        "intValue": 36554654156153,
+        "doubleValue": 2121.215415183451,
+        "listDoubleValue": <double>[12, 25, 354, 21, 215, 51, 2],
+        "mapIntStringValue": {
+          "5": "an amazing 5 value",
+          "2158451": "an amazing (maybe) long value"
+        },
+        "boolValue": true,
+        "binaryValue": base64.encode([21, 51,51, 12,15,12 ,12, 12,12,1,21]),
+      };
+
+      var decodedType = ExampleType.createNew()..mergeFromJson(inputJson);
+      expect(decodedType.stringValue, equals("an amazing string value"));
+      expect(decodedType.intValue, 36554654156153);
+      expect(decodedType.doubleValue, 2121.215415183451);
+      expect(collectionEquals(decodedType.listDoubleValue, [12, 25, 354, 21, 215, 51, 2]), true);
+      expect(collectionEquals(decodedType.mapIntStringValue, {5: "an amazing 5 value", 2158451: "an amazing (maybe) long value"}), true);
+      expect(decodedType.boolValue, true);
+      expect(decodedType.binaryValue, Uint8List.fromList([21, 51,51, 12,15,12 ,12, 12,12,1,21]));
+    }, tags: "decode");
   });
 }
 
