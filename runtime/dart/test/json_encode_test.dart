@@ -3,7 +3,8 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 
-import 'buffer_encode_test.dart';
+import 'example_enum.dart';
+import 'example_type.dart';
 
 void main() {
   group("Test encoding and decoding to/from json", () {
@@ -19,8 +20,24 @@ void main() {
         listDoubleValue: [12, 25, 354, 21, 215, 51, 2],
         boolValue: true,
         binaryValue: Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]),
+        enumValue: ExampleTypeEnum.randomValue
       ).toJson();
-      expect(encodedJson, equals(encodedJson));
+
+      var expectedJson = {
+        "stringValue": "an amazing string value",
+        "intValue": 36554654156153,
+        "doubleValue": 2121.215415183451,
+        "listDoubleValue": <double>[12, 25, 354, 21, 215, 51, 2],
+        "mapIntStringValue": {
+          "5": "an amazing 5 value",
+          "2158451": "an amazing (maybe) long value"
+        },
+        "boolValue": true,
+        "binaryValue": base64.encode([21, 51,51, 12,15,12 ,12, 12,12,1,21]),
+        "enumValue": 3
+      };
+
+      expect(encodedJson, equals(expectedJson));
     }, tags: "encode");
 
     test("Test json decode", () {
@@ -35,6 +52,7 @@ void main() {
         },
         "boolValue": true,
         "binaryValue": base64.encode([21, 51,51, 12,15,12 ,12, 12,12,1,21]),
+        "enumValue": 2
       }));
 
       var decodedType = ExampleType.createEmpty();
@@ -46,6 +64,7 @@ void main() {
       expect(decodedType.mapIntStringValue, equals({5: "an amazing 5 value", 2158451: "an amazing (maybe) long value"}));
       expect(decodedType.boolValue, isTrue);
       expect(decodedType.binaryValue, equals(Uint8List.fromList([21, 51,51, 12,15,12 ,12, 12,12,1,21])));
+      expect(decodedType.enumValue, equals(ExampleTypeEnum.second));
     }, tags: "decode");
   });
 }

@@ -17,6 +17,7 @@ import 'package:darq/darq.dart';
 part './src/schema_field.dart';
 part './src/schema_type.dart';
 part './src/schema_field_value_type.dart';
+part './src/schema_type_enum.dart';
 part './src/schema_field_set.dart';
 part './src/schema_type_info.dart';
 part './src/json_encoder.dart';

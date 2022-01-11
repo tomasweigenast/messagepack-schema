@@ -2,14 +2,9 @@ import 'dart:typed_data';
 
 import 'package:benchmark/benchmark.dart';
 
-import 'example_field_set.dart';
 import 'example_type.dart';
 
 void main() {
-  benchmark("Copy SchemaFieldSet with every SchemaFieldValue without its actual value when creating new types.", () {
-    exampleFieldSet.clone();
-  }, iterations: 1000000);
-
   group("Buffer encode/decode", () {
     late ExampleType type;
     late Uint8List typeAsBuffer;
@@ -38,8 +33,4 @@ void main() {
       ExampleType.createEmpty().mergeFromBuffer(typeAsBuffer);
     }, iterations: 1000000);
   });
-
-  benchmark("Copy SchemaFieldSet with every SchemaFieldValue without its actual value when creating new types.", () {
-    exampleFieldSet.clone();
-  }, iterations: 1000000);
 }

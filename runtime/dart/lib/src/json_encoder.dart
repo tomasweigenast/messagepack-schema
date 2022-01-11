@@ -3,7 +3,7 @@ part of '../messagepack_schema.dart';
 Map<String, Object?> _toJson(SchemaFieldSet fieldSet) {
   Map<String, Object?> output = {};
   for(var field in fieldSet.fields) {
-    Object value = _writeValue(field.valueType, field.value);
+    Object value = _writeValue(field.valueType, fieldSet.value(field.index));
     output[field.dartName] = value;
   }
 
@@ -51,6 +51,9 @@ Object _writeValue(SchemaFieldValueType valueType, dynamic value) {
 
       return newMap;
 
+    case _SchemaFieldValueTypeCodes.enumType:
+      return (value as SchemaTypeEnum).index;
+
     case _SchemaFieldValueTypeCodes.customType:
       var customType = value as SchemaType;
       return customType.toJson();
@@ -87,7 +90,7 @@ void _mergeJson<T>(Map<String, Object?> map, SchemaFieldSet<T> fieldSet) {
     if(mapValue is List) {
       for(int i = 0; i < mapValue.length; i++) {
         var value = _readValue(mapValue[i], (field.valueType as _ListFieldValueType).elementType, false, field.customBuilder);
-        field.value.add(value);
+        fieldSet.value(field.index).add(value);
       }
     } else if(mapValue is Map) {
       var mapFieldType = field.valueType as _MapFieldValueType;
@@ -95,11 +98,11 @@ void _mergeJson<T>(Map<String, Object?> map, SchemaFieldSet<T> fieldSet) {
         var key = _readMapKey(entry.key, mapFieldType.keyType);
         var value = _readValue(entry.value, mapFieldType.valueType, false, null);
 
-        field.value[key] = value;
+        fieldSet.value(field.index)[key] = value;
       }
     } else {
       dynamic value = _readValue(mapValue, field.valueType, field.isNullable, field.customBuilder);
-      field.value = value ?? field.defaultValue;
+      fieldSet.setValue(field.index, value ?? field.defaultValue);
     }
     
   }
@@ -167,9 +170,16 @@ dynamic _readValue(Object? value, SchemaFieldValueType valueType, bool nullable,
 
       throw InvalidValueError("Expected map value. Given: ${value.runtimeType}");
 
+    case _SchemaFieldValueTypeCodes.enumType:
+      if(value is int) {
+        return builder!([value]);
+      } 
+
+      throw InvalidValueError("Expect enum value as int. Given: ${value.runtimeType}");
+
     case _SchemaFieldValueTypeCodes.customType:
       if(value is Map && builder != null) {
-        return builder();
+        return builder([]);
       }
 
       throw InvalidValueError("Expected custom type as map value. Given: ${value.runtimeType}");
@@ -230,31 +240,5 @@ Object _convertMapKey(SchemaFieldValueType valueType, String key) {
 
     default: 
       throw StateError("Value $key cannot be used as a map key.");
-  }
-}
-
-dynamic _getList(_ListFieldValueType listType) {
-  switch(listType.elementType.typeCode) {
-    case _SchemaFieldValueTypeCodes.booleanType:
-      return <bool>[];
-
-    case _SchemaFieldValueTypeCodes.stringType:
-      return <String>[];
-
-    case _SchemaFieldValueTypeCodes.intType:
-      return <int>[];
-
-    case _SchemaFieldValueTypeCodes.doubleType:
-      return <double>[];
-
-    case _SchemaFieldValueTypeCodes.binaryType:
-      return <Uint8List>[];
-
-    case _SchemaFieldValueTypeCodes.listType:
-    case _SchemaFieldValueTypeCodes.mapType:
-      throw StateError("Nested lists and maps are not supported.");
-
-    case _SchemaFieldValueTypeCodes.customType:
-      return <SchemaType>[];
   }
 }

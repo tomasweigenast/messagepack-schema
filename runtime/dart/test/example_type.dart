@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:messagepack_schema/messagepack_schema.dart';
 
+import 'example_enum.dart';
+
 class ExampleType extends SchemaType<ExampleType> {
   static final SchemaTypeInfo<ExampleType> _exampleTypeInfo = SchemaTypeInfo(
     fullName: "example.Example",
@@ -12,7 +14,8 @@ class ExampleType extends SchemaType<ExampleType> {
       3: SchemaField.list<double>("list_double_value", "listDoubleValue", 3, SchemaFieldValueType.float64, null),
       4: SchemaField.map<int, String>("map_int_string_value", "mapIntStringValue", 4, SchemaFieldValueType.int64, SchemaFieldValueType.string, null),
       5: SchemaField<bool>("bool_value", "boolValue", 5,  SchemaFieldValueType.boolean, false, null, null),
-      6: SchemaField<Uint8List>("binary_value", "binaryValue", 6, SchemaFieldValueType.binary, false, null, null)
+      6: SchemaField<Uint8List>("binary_value", "binaryValue", 6, SchemaFieldValueType.binary, false, null, null),
+      7: SchemaField.enumerator<ExampleTypeEnum>("enum_value", "enumValue", 7, false, ExampleTypeEnum.unknown, ExampleTypeEnum.maybeValueOf)
     })
   );
   
@@ -42,6 +45,9 @@ class ExampleType extends SchemaType<ExampleType> {
   Uint8List get binaryValue => readValue_(6);
   set binaryValue(Uint8List value) => setValue_(6, value);
 
+  ExampleTypeEnum get enumValue => readValue_(7);
+  set enumValue(ExampleTypeEnum value) => setValue_(7, value);
+
   factory ExampleType({
     required String stringValue, 
     required int intValue, 
@@ -49,7 +55,8 @@ class ExampleType extends SchemaType<ExampleType> {
     List<double>? listDoubleValue, 
     Map<int, String>? mapIntStringValue,
     required Uint8List binaryValue,
-    required bool boolValue}) {
+    required bool boolValue,
+    required ExampleTypeEnum enumValue}) {
     var instance = createEmpty();
     instance.stringValue = stringValue;
     instance.intValue = intValue;
@@ -58,6 +65,7 @@ class ExampleType extends SchemaType<ExampleType> {
     instance.mapIntStringValue = mapIntStringValue ?? instance.info_.fieldSet[4]!.defaultValue;
     instance.binaryValue = binaryValue;
     instance.boolValue = boolValue;
+    instance.enumValue = enumValue;
     
     return instance;
   }

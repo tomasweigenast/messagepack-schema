@@ -1,0 +1,14 @@
+name: benchmarks
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: '>=2.16.0-80.1.beta <3.0.0'
+
+dependencies:
+  benchmark: ^0.3.0
+  messagepack_schema:
+    path: ../
+
+dev_dependencies:
+  lints: ^1.0.0

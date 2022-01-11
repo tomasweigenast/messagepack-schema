@@ -47,12 +47,12 @@ abstract class SchemaType<T extends Object> {
       throw UnknownTypeField(fieldIndex);
     }
 
-    return field.value;
+    return _fieldSet.value(fieldIndex);
   }
 
   void _ensureNotNulls() {
-    for(var field in _fieldSet._fields.values.where((element) => !element.isNullable && element.value == null && element.defaultValue != null)) {
-      field.value = field.defaultValue;
+    for(var field in _fieldSet._fields.values.where((element) => !element.isNullable && element.defaultValue != null)) {
+      _fieldSet.setValue(field.index, field.defaultValue);
     }
   }
 
@@ -63,7 +63,7 @@ abstract class SchemaType<T extends Object> {
       throw UnknownTypeField(fieldIndex);
     }
 
-    field.value = value;
+    _fieldSet.setValue(fieldIndex, value);
   }
 
   /// Merges a encoded messagepack buffer to the current type instance.
@@ -83,16 +83,31 @@ abstract class SchemaType<T extends Object> {
     }
   }
 
-  dynamic _unpackField(SchemaField field, Unpacker unpacker) {
-    dynamic value = _unpackValue(field.valueType, unpacker);
+  void _unpackField(SchemaField field, Unpacker unpacker) {
+    dynamic value = _unpackValue(field.valueType, unpacker, field.customBuilder);
     _checkNullability(field, value);
+    
+    if(field.valueType is _ListFieldValueType) {
+      List listValue = value as List;
+      _checkNullability(field, value);
 
-    field.value = value;
+      for(dynamic listValue in listValue) {
+        _fieldSet.value(field.index).add(listValue);
+      }
 
-    return value;
+    } else if(field.valueType is _MapFieldValueType) {
+      Map mapValue = value as Map;
+
+       for(dynamic mapEntry in mapValue.entries) {
+        _fieldSet.value(field.index)[mapEntry.key] = mapEntry.value;
+      }
+
+    } else {
+      _fieldSet.setValue(field.index, value);
+    }
   }
 
-  dynamic _unpackValue(SchemaFieldValueType valueType, Unpacker unpacker) {
+  dynamic _unpackValue(SchemaFieldValueType valueType, Unpacker unpacker, CustomBuilder? builder) {
     switch(valueType.typeCode) {
       case _SchemaFieldValueTypeCodes.stringType:
         return unpacker.unpackString();
@@ -113,7 +128,7 @@ abstract class SchemaType<T extends Object> {
         int listLength = unpacker.unpackListLength();
         var outputList = [];
         for(int i = 0; i < listLength; i++) {
-          outputList.add(_unpackValue((valueType as _ListFieldValueType).elementType, unpacker));
+          outputList.add(_unpackValue((valueType as _ListFieldValueType).elementType, unpacker, null));
         }
 
         return outputList;
@@ -121,7 +136,11 @@ abstract class SchemaType<T extends Object> {
       case _SchemaFieldValueTypeCodes.mapType:
         int mapLength = unpacker.unpackMapLength();
         var mapType = valueType as _MapFieldValueType;
-        return {for (var i = 0; i < mapLength; i++) _unpackValue(mapType.keyType, unpacker): _unpackValue(mapType.valueType, unpacker)};
+        return {for (var i = 0; i < mapLength; i++) _unpackValue(mapType.keyType, unpacker, null): _unpackValue(mapType.valueType, unpacker, null)};
+
+      case _SchemaFieldValueTypeCodes.enumType:
+        int enumValue = unpacker.unpackInt()!;
+        return builder!([enumValue]);
 
       case _SchemaFieldValueTypeCodes.customType:
         return unpacker.unpackBinary();
@@ -129,8 +148,9 @@ abstract class SchemaType<T extends Object> {
   }
 
   void _packField(SchemaField field, Packer packer) {
-    _checkNullability(field, field.value);
-    _packValue(field.value, field.valueType, packer);
+    dynamic value = _fieldSet.value(field.index);
+    _checkNullability(field, value);
+    _packValue(value, field.valueType, packer);
   }
 
   void _packValue(dynamic value, SchemaFieldValueType valueType, Packer packer) {
@@ -172,6 +192,11 @@ abstract class SchemaType<T extends Object> {
           _packValue(mapEntry.key, mapType.keyType, packer);
           _packValue(mapEntry.value, mapType.valueType, packer);
         }
+        break;
+
+      case _SchemaFieldValueTypeCodes.enumType:
+        var enumerator = value as SchemaTypeEnum;
+        packer.packInt(enumerator.index);
         break;
 
       case _SchemaFieldValueTypeCodes.customType:

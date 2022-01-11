@@ -1,6 +1,6 @@
 part of '../messagepack_schema.dart';
 
-typedef CustomBuilder = SchemaField Function();
+typedef CustomBuilder = dynamic Function(List args);
 
 class SchemaField<T> {
   final String name;
@@ -10,8 +10,7 @@ class SchemaField<T> {
   final SchemaFieldValueType valueType;
   final bool isNullable;
   final CustomBuilder? customBuilder;
-
-  T? value;
+  // final T Function(int index)? enumMaybeValueOf;
 
   SchemaField._internal({
     required this.name, 
@@ -55,6 +54,18 @@ class SchemaField<T> {
       defaultValue: <TKey, TValue>{},
       isNullable: false,
       customBuilder: customBuilder
+    );
+  }
+
+  static SchemaField<TEnum> enumerator<TEnum extends SchemaTypeEnum>(String fieldName, String dartName, int index, bool isNullable, TEnum defaultValue, TEnum? Function(int index) customBuilder) {
+    return SchemaField<TEnum>._internal(
+      name: fieldName,
+      dartName: dartName,
+      index: index,
+      valueType: SchemaFieldValueType.enumerator,
+      defaultValue: defaultValue,
+      isNullable: isNullable,
+      customBuilder: (args) => customBuilder(args[0] as int)
     );
   }
 
