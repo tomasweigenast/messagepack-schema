@@ -3,8 +3,16 @@ part of '../messagepack_schema.dart';
 Map<String, Object?> _toJson(SchemaFieldSet fieldSet) {
   Map<String, Object?> output = {};
   for(var field in fieldSet.fields) {
-    Object? value = _writeValue(field.valueType, fieldSet.value(field.index));
-    output[field.dartName] = value;
+    var fieldValue = fieldSet.value(field.index);
+    Object? value = _writeValue(field.valueType, fieldValue);
+    
+    // Skip null values
+    if(value == null && field.skipIfNull) {
+      continue;
+    } 
+
+    String fieldName = (field as dynamic).nameFunction?.call(fieldValue as dynamic) ?? field.dartName;
+    output[fieldName] = value;
   }
 
   return output;
@@ -58,6 +66,9 @@ Object? _writeValue(SchemaFieldValueType valueType, dynamic value) {
     case _SchemaFieldValueTypeCodes.enumType:
       return (value as SchemaTypeEnum).index;
 
+    case _SchemaFieldValueTypeCodes.unionType:
+      return (value as SchemaTypeUnion).toJson();
+
     case _SchemaFieldValueTypeCodes.customType:
       var customType = value as SchemaType;
       return customType.toJson();
@@ -82,44 +93,69 @@ String _convertToMapKey(SchemaFieldValueType valueType, Object value) {
   }
 }
 
-void _mergeJson<T>(Map<String, Object?> map, SchemaFieldSet<T> fieldSet) {
-  for(var field in fieldSet.fields) {
-    
-    // ignore the json does not contains the field name
-    if(!map.containsKey(field.dartName)) {
-      continue;
-    }
+void _mergeJson<T>(Object? map, SchemaFieldSet<T> fieldSet) {
+  // if the map is null, do nothing.
+  if(map == null) {
+    return;
+  }
 
-    dynamic mapValue = map[field.dartName];
-    if(mapValue is List) {
-      for(int i = 0; i < mapValue.length; i++) {
-        var value = _readValue(mapValue[i], (field.valueType as _ListFieldValueType).elementType, false, field.customBuilder);
-        fieldSet.value(field.index).add(value);
+  var unknownFields = {};
+
+  if(map is Map) {
+
+    map.forEach((key, Object? mapValue) { 
+      var field = fieldSet.byName(key);
+      if(field == null) {
+        unknownFields[key] = mapValue;
+        return;
       }
-    } else if(mapValue is Map) {
-      if(field.valueType.typeCode == _SchemaFieldValueTypeCodes.mapType) {
-        var mapFieldType = field.valueType as _MapFieldValueType;
-        for(var entry in mapValue.entries) {
-          var key = _readMapKey(entry.key, mapFieldType.keyType);
-          var value = _readValue(entry.value, mapFieldType.valueType, false, null);
 
-          fieldSet.value(field.index)[key] = value;
+      if(mapValue is List) {
+        for(int i = 0; i < mapValue.length; i++) {
+          var value = _readValue(mapValue[i], (field.valueType as _ListFieldValueType).elementType, false, field.customBuilder);
+          fieldSet.value(field.index).add(value);
         }
+      } else if(mapValue is Map) {
+        switch(field.valueType.typeCode) {
+          case _SchemaFieldValueTypeCodes.mapType:
+            var mapFieldType = field.valueType as _MapFieldValueType;
+            for(var entry in mapValue.entries) {
+              var key = _readMapKey(entry.key, mapFieldType.keyType);
+              var value = _readValue(entry.value, mapFieldType.valueType, false, null);
+
+              fieldSet.value(field.index)[key] = value;
+            }
+            break;
+
+          case _SchemaFieldValueTypeCodes.customType:
+            SchemaType typeInstance = field.customBuilder!([]) as SchemaType;
+            typeInstance.mergeFromJson(mapValue.cast<String, Object>());
+            fieldSet.setValue(field.index, typeInstance);
+            break;
+        }
+        
       } else {
-        SchemaType typeInstance = field.customBuilder!([]) as SchemaType;
-        typeInstance.mergeFromJson(mapValue.cast<String, Object>());
+        switch(field.valueType.typeCode) {
+          case _SchemaFieldValueTypeCodes.unionType:
+            SchemaTypeUnion unionInstance = field.customBuilder!([]) as SchemaTypeUnion;
+            unionInstance.mergeFromJson(mapValue);
 
-        fieldSet.setValue(field.index, typeInstance);
-      }
-    } else {
-      dynamic value = _readValue(mapValue, field.valueType, field.isNullable, field.customBuilder);
-      if(value == null && !field.isNullable) {
-        value = field.defaultValue;
-      }
+            fieldSet.setValue(field.index, unionInstance);
+            break;
 
-      fieldSet.setValue(field.index, value);
-    }
-    
+          default:
+            dynamic value = _readValue(mapValue, field.valueType, field.isNullable, field.customBuilder);
+            if(value == null && !field.isNullable) {
+              value = field.defaultValue;
+            }
+
+            fieldSet.setValue(field.index, value);
+            break;
+        }
+      }
+    });
+  } else {
+    throw StateError("expected json object");
   }
 }
 

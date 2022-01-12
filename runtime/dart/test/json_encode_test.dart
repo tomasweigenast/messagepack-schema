@@ -3,8 +3,9 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 
-import 'example_enum.dart';
-import 'example_type.dart';
+import './types/example_enum.dart';
+import './types/example_type.dart';
+import 'types/example_union.dart';
 
 void main() {
   group("Test encoding and decoding to/from json", () {
@@ -28,8 +29,10 @@ void main() {
             "first": true,
             "me?": false,
             "you?": true
-          }
-
+          },
+          unionValue: ExampleUnion(
+            aString: "a string in a union, yeah!"
+          )
         )
       ).toJson();
 
@@ -54,7 +57,7 @@ void main() {
             "me?": false,
             "you?": true
           },
-          "enumValue": null
+          "aString": "a string in a union, yeah!"
         }
       };
 
@@ -83,7 +86,7 @@ void main() {
             "me?": false,
             "you?": true
           },
-          "enumValue": null
+          "aEnum": 2
         }
       }));
 
@@ -102,6 +105,7 @@ void main() {
       expect(decodedType.anotherTypeValue!.listDoubleValue, isEmpty);
       expect(decodedType.anotherTypeValue!.mapStringBoolValue, equals({"first": true, "me?": false, "you?": true}));
       expect(decodedType.anotherTypeValue!.enumValue, isNull);
+      expect(decodedType.anotherTypeValue!.unionValue.aEnum, equals(ExampleTypeEnum.second));
     }, tags: "decode");
   });
 }

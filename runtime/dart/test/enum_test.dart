@@ -1,7 +1,7 @@
 import 'package:test/expect.dart';
 import 'package:test/scaffolding.dart';
 
-import 'example_enum.dart';
+import './types/example_enum.dart';
 
 void main() {
   group("Test enums", () {

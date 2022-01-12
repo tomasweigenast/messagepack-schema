@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:messagepack_schema/src/message_pack/packer.dart';
 import 'package:test/test.dart';
 
-import 'example_enum.dart';
-import 'example_type.dart';
+import './types/example_enum.dart';
+import './types/example_type.dart';
 
 void main() {
   group("Test encoding and decoding to/from a buffer", () {
@@ -43,7 +43,7 @@ void main() {
         listDoubleValue: [12, 25, 354, 21, 215, 51, 2],
         boolValue: true,
         binaryValue: Uint8List.fromList([21, 51,51,12,15,12 ,12, 12,12,1,21]),
-        enumValue: ExampleTypeEnum.randomValue
+        enumValue: ExampleTypeEnum.randomValue,
       );
 
       var buffer = example.toBuffer();

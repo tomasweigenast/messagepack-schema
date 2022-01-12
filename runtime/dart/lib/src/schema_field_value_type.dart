@@ -13,7 +13,7 @@ abstract class SchemaFieldValueType {
   static const SchemaFieldValueType boolean = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.booleanType, typeCode: _SchemaFieldValueTypeCodes.booleanType);
   static const SchemaFieldValueType binary = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.binaryType, typeCode: _SchemaFieldValueTypeCodes.binaryType);
   static const SchemaFieldValueType enumerator = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.enumType, typeCode: _SchemaFieldValueTypeCodes.enumType);
-  static const SchemaFieldValueType union = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.enumType, typeCode: _SchemaFieldValueTypeCodes.enumType);
+  static const SchemaFieldValueType union = _PrimitiveFieldValueType(typeName: _SchemaFieldValueTypeNames.unionType, typeCode: _SchemaFieldValueTypeCodes.unionType);
   
   factory SchemaFieldValueType.custom(String customTypeName) => _CustomFieldValueType(customTypeName: customTypeName);
   factory SchemaFieldValueType.list(SchemaFieldValueType elementType) => _ListFieldValueType(elementType: elementType);

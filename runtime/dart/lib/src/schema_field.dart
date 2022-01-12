@@ -1,6 +1,7 @@
 part of '../messagepack_schema.dart';
 
 typedef CustomBuilder = dynamic Function(List args);
+typedef NamedField<T> = String Function(T);
 
 class SchemaField<T> {
   final String name;
@@ -10,7 +11,8 @@ class SchemaField<T> {
   final SchemaFieldValueType valueType;
   final bool isNullable;
   final CustomBuilder? customBuilder;
-  // final T Function(int index)? enumMaybeValueOf;
+  final NamedField<T>? nameFunction;
+  final bool skipIfNull;
 
   SchemaField._internal({
     required this.name, 
@@ -19,7 +21,9 @@ class SchemaField<T> {
     required this.valueType, 
     required this.isNullable, 
     required this.defaultValue, 
-    required this.customBuilder});
+    required this.customBuilder,
+    required this.nameFunction,
+    required this.skipIfNull});
 
   factory SchemaField(String fieldName, String dartName, int index, SchemaFieldValueType valueType, bool isNullable, T? defaultValue, CustomBuilder? customBuilder) {
     return SchemaField<T>._internal(
@@ -30,6 +34,8 @@ class SchemaField<T> {
       defaultValue: defaultValue ?? _findDefaultValue<T>(),
       isNullable: isNullable,
       customBuilder: customBuilder,
+      nameFunction: null,
+      skipIfNull: false
     );
   }
 
@@ -41,7 +47,9 @@ class SchemaField<T> {
       valueType: SchemaFieldValueType.list(elementType),
       defaultValue: <T>[],
       isNullable: false,
-      customBuilder: customBuilder
+      customBuilder: customBuilder,
+      nameFunction: null,
+      skipIfNull: false
     );
   }
 
@@ -53,7 +61,9 @@ class SchemaField<T> {
       valueType: SchemaFieldValueType.map(keyType, valueType),
       defaultValue: <TKey, TValue>{},
       isNullable: false,
-      customBuilder: customBuilder
+      customBuilder: customBuilder,
+      nameFunction: null,
+      skipIfNull: false
     );
   }
 
@@ -65,7 +75,9 @@ class SchemaField<T> {
       valueType: SchemaFieldValueType.enumerator,
       defaultValue: defaultValue,
       isNullable: isNullable,
-      customBuilder: (args) => customBuilder(args[0] as int)
+      customBuilder: (args) => customBuilder(args[0] as int),
+      nameFunction: null,
+      skipIfNull: true
     );
   }
 
@@ -77,12 +89,24 @@ class SchemaField<T> {
       valueType: SchemaFieldValueType.custom(typeName),
       isNullable: isNullable,
       defaultValue: customBuilder(),
-      customBuilder: (_) => customBuilder()
+      customBuilder: (_) => customBuilder(),
+      nameFunction: null,
+      skipIfNull: false
     );
   }
 
-  SchemaField<T> withoutValue() {
-    return SchemaField._internal(name: name, dartName: dartName, index: index, valueType: valueType, isNullable: isNullable, defaultValue: defaultValue, customBuilder: customBuilder);
+  static SchemaField<TType> union<TType extends SchemaTypeUnion>(String fieldName, String dartName, String typeName, int index, TType Function() customBuilder, NamedField<TType> nameFunction) {
+    return SchemaField<TType>._internal(
+      name: fieldName,
+      dartName: dartName,
+      index: index,
+      valueType: SchemaFieldValueType.union,
+      isNullable: true,
+      defaultValue: customBuilder(),
+      customBuilder: (_) => customBuilder(),
+      nameFunction: nameFunction,
+      skipIfNull: true
+    );
   }
 }
 
