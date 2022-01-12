@@ -9,8 +9,18 @@ class ExampleUnion extends SchemaTypeUnion<ExampleUnion> {
     0: ExampleUnionTypes.aNumber,
     1: ExampleUnionTypes.aString,
     2: ExampleUnionTypes.aExampleType,
+    3: ExampleUnionTypes.aEnum,
     -1: ExampleUnionTypes.unset,
   };
+
+  static const List<String> _unionFieldNames = [
+    "aNumber",
+    "aString",
+    "aExampleType",
+    "aEnum"
+  ];
+
+  static List<String> get $fieldNames_ => _unionFieldNames;
 
   static final SchemaFieldSet<ExampleUnion> _fieldSet = SchemaFieldSet(SchemaFieldSetBuilder()
     .addField(SchemaField<int>("a_number", "aNumber", 0, SchemaFieldValueType.int64, false, null, null))

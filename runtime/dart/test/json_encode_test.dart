@@ -86,7 +86,7 @@ void main() {
             "me?": false,
             "you?": true
           },
-          "aEnum": 2
+          "aString": "random string"
         }
       }));
 
@@ -105,7 +105,7 @@ void main() {
       expect(decodedType.anotherTypeValue!.listDoubleValue, isEmpty);
       expect(decodedType.anotherTypeValue!.mapStringBoolValue, equals({"first": true, "me?": false, "you?": true}));
       expect(decodedType.anotherTypeValue!.enumValue, isNull);
-      expect(decodedType.anotherTypeValue!.unionValue.aEnum, equals(ExampleTypeEnum.second));
+      expect(decodedType.anotherTypeValue!.unionValue.aString, equals("random string"));
     }, tags: "decode");
   });
 }

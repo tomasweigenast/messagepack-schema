@@ -143,6 +143,16 @@ void _mergeJson<T>(Object? map, SchemaFieldSet<T> fieldSet) {
             fieldSet.setValue(field.index, unionInstance);
             break;
 
+          case _SchemaFieldValueTypeCodes.enumType:
+            try {
+              int enumIndex = mapValue as int;
+              var enumValue = field.customBuilder!([enumIndex]);
+              fieldSet.setValue(field.index, enumValue);
+            } catch(_) {
+              throw StateError("Invalid int as enum. Given: $mapValue");
+            }
+            break;
+
           default:
             dynamic value = _readValue(mapValue, field.valueType, field.isNullable, field.customBuilder);
             if(value == null && !field.isNullable) {
@@ -156,6 +166,28 @@ void _mergeJson<T>(Object? map, SchemaFieldSet<T> fieldSet) {
     });
   } else {
     throw StateError("expected json object");
+  }
+
+  if(unknownFields.isNotEmpty && fieldSet.hasUnions) {
+    unknownFields.forEach((key, value) { 
+      var unionFieldIndex = fieldSet._unions.entries.firstWhereOrNull((element) => element.value.contains(key))?.key;
+      if(unionFieldIndex == null) {
+        return;
+      }
+
+      var unionField = fieldSet[unionFieldIndex];
+      if(unionField == null) {
+        return;
+      }
+
+      SchemaTypeUnion unionInstance = unionField.customBuilder!([]) as SchemaTypeUnion;
+      unionInstance.mergeFromJson({
+        key: value
+      });
+
+      fieldSet.setValue(unionFieldIndex, unionInstance);
+      
+    });
   }
 }
 

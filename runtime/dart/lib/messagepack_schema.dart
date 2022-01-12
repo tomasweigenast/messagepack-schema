@@ -15,6 +15,7 @@ import 'package:messagepack_schema/src/errors/unknown_field.dart';
 import 'package:messagepack_schema/src/message_pack/packer.dart';
 import 'package:messagepack_schema/src/message_pack/unpacker.dart';
 import 'package:darq/darq.dart';
+import 'package:collection/collection.dart';
 
 part './src/schema_field.dart';
 part './src/schema_type.dart';
@@ -25,3 +26,4 @@ part './src/schema_field_set.dart';
 part './src/schema_type_info.dart';
 part './src/json_encoder.dart';
 part './src/buffer_encoder.dart';
+part './src/utils.dart';

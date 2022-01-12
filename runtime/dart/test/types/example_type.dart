@@ -91,7 +91,7 @@ class AnotherType extends SchemaType<AnotherType> {
       .addField(SchemaField.map<String, bool>("map_string_bool_value", "mapStringBoolValue", 2, SchemaFieldValueType.string, SchemaFieldValueType.boolean, null))
       .addField(SchemaField<bool>("bool_value", "boolValue", 3,  SchemaFieldValueType.boolean, true, null, null))
       .addField(SchemaField.enumerator<ExampleTypeEnum>("enum_value", "enumValue", 4, true, ExampleTypeEnum.unknown, ExampleTypeEnum.maybeValueOf))
-      .addField(SchemaField.union<ExampleUnion>("union_value", "unionValue", "ExampleUnion", 5, ExampleUnion.new, (u) => u.fieldName()))
+      .addField(SchemaField.union<ExampleUnion>("union_value", "unionValue", "ExampleUnion", 5, ExampleUnion.$fieldNames_, ExampleUnion.new, (u) => u.fieldName()))
     )
   );
   

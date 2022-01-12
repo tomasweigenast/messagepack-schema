@@ -93,6 +93,14 @@ abstract class SchemaTypeUnion<T> extends NamedEncodable {
 
   @override
   void mergeFromJson(Object? map) {
-    // TODO: implement mergeFromJson
+    if(map is Map) {
+      _mergeJson(map, fieldSet_);
+      _setField = fieldSet_._values.indexWhere((element) => element != null);
+      if(_setField != null) {
+        _currentValue = fieldSet_._values[_setField!];
+      }
+    } else {
+      throw StateError("invalid json as map.");
+    }
   }
 }

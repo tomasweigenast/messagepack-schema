@@ -13,6 +13,9 @@ class SchemaField<T> {
   final CustomBuilder? customBuilder;
   final NamedField<T>? nameFunction;
   final bool skipIfNull;
+  final List<String>? unionFields;
+
+  bool get isUnion => valueType.typeCode == _SchemaFieldValueTypeCodes.unionType;
 
   SchemaField._internal({
     required this.name, 
@@ -23,7 +26,8 @@ class SchemaField<T> {
     required this.defaultValue, 
     required this.customBuilder,
     required this.nameFunction,
-    required this.skipIfNull});
+    required this.skipIfNull,
+    required this.unionFields});
 
   factory SchemaField(String fieldName, String dartName, int index, SchemaFieldValueType valueType, bool isNullable, T? defaultValue, CustomBuilder? customBuilder) {
     return SchemaField<T>._internal(
@@ -35,7 +39,8 @@ class SchemaField<T> {
       isNullable: isNullable,
       customBuilder: customBuilder,
       nameFunction: null,
-      skipIfNull: false
+      skipIfNull: false,
+      unionFields: null
     );
   }
 
@@ -49,7 +54,8 @@ class SchemaField<T> {
       isNullable: false,
       customBuilder: customBuilder,
       nameFunction: null,
-      skipIfNull: false
+      skipIfNull: false,
+      unionFields: null
     );
   }
 
@@ -63,7 +69,8 @@ class SchemaField<T> {
       isNullable: false,
       customBuilder: customBuilder,
       nameFunction: null,
-      skipIfNull: false
+      skipIfNull: false,
+      unionFields: null
     );
   }
 
@@ -77,7 +84,8 @@ class SchemaField<T> {
       isNullable: isNullable,
       customBuilder: (args) => customBuilder(args[0] as int),
       nameFunction: null,
-      skipIfNull: true
+      skipIfNull: true,
+      unionFields: null
     );
   }
 
@@ -91,11 +99,12 @@ class SchemaField<T> {
       defaultValue: customBuilder(),
       customBuilder: (_) => customBuilder(),
       nameFunction: null,
-      skipIfNull: false
+      skipIfNull: false,
+      unionFields: null
     );
   }
 
-  static SchemaField<TType> union<TType extends SchemaTypeUnion>(String fieldName, String dartName, String typeName, int index, TType Function() customBuilder, NamedField<TType> nameFunction) {
+  static SchemaField<TType> union<TType extends SchemaTypeUnion>(String fieldName, String dartName, String typeName, int index, List<String> fieldNames, TType Function() customBuilder, NamedField<TType> nameFunction) {
     return SchemaField<TType>._internal(
       name: fieldName,
       dartName: dartName,
@@ -105,7 +114,8 @@ class SchemaField<T> {
       defaultValue: customBuilder(),
       customBuilder: (_) => customBuilder(),
       nameFunction: nameFunction,
-      skipIfNull: true
+      skipIfNull: true,
+      unionFields: fieldNames
     );
   }
 }
