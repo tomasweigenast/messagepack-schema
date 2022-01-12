@@ -1,5 +1,13 @@
 ﻿# MessagePack Schema Specification
 
+## Table of contents
+1. [Primitive Data Types](#primitive-data-types)
+2. [Types](#types)
+	1. [Struct](#struct-type)
+	2. [Enum](#enum-type)
+	3. [Union](#union-type)
+3. [Writing schema files](#writing-schema-files)
+
 ## Primitive Data Types
 The MessagePack Schema suports the same MessagePack's data types. They are listed down:
 | Data Type | C# Type | Dart Type |
@@ -60,6 +68,7 @@ E.g.:
 ```
 my_amazing_field:string 0 = "here! a default value!"
 another_field:float32 1 = -242.32
+my_amazing_enum:MyEnum 2 = MyEnum.second
 ```
 * `string` fields must declare their default value between quotation marks, as a normal string in many programming languages.
 * `list(T)` fields declare their default values between brackets, each value comma separated.
