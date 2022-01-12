@@ -29,3 +29,8 @@ type MyEnum enum {
 	another 2
 	third 3
 }
+
+type MyUnion union {
+	string_value:string 1
+	bool_value:boolean 2
+}

@@ -1,1 +1,2 @@
+﻿# MessagePack Schema Specification
 

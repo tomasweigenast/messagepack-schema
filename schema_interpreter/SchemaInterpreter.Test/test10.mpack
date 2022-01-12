@@ -1,0 +1,6 @@
+﻿version:1
+
+type MyUnion union {
+	string_value:string 1
+	bool_value?:boolean 2
+}
