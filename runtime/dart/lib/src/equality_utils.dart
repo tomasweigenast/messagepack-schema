@@ -21,3 +21,24 @@ class _Hashing {
     return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
   }
 }
+
+const DeepCollectionEquality _collectionEquality = DeepCollectionEquality();
+class _Equality {
+  const _Equality();
+
+  static bool deepEquality(left, right) {
+    if(left is SchemaType && right is SchemaType) {
+      return left == right;
+    }
+
+    if((left is List) && (right is List)) {
+      return _collectionEquality.equals(left, right);
+    }
+
+    if((left is Map) && (right is Map)) {
+      return _collectionEquality.equals(left, right);
+    }
+
+    return left == right;
+  }
+}

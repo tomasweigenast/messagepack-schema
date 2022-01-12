@@ -103,4 +103,20 @@ abstract class SchemaTypeUnion<T> extends NamedEncodable {
       throw StateError("invalid json as map.");
     }
   }
+
+  @override
+  int get hashCode => _currentValue.hashCode;
+
+  @override
+  bool operator ==(other) {
+    if(identical(this, other)) {
+      return true;
+    }
+
+    if(other is SchemaTypeUnion) {
+      return _currentValue == other._currentValue;
+    }
+
+    return false;
+  } 
 }

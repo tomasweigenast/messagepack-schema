@@ -70,4 +70,20 @@ abstract class SchemaType<T extends Object> extends Encodable {
     }
   }
 
+  @override
+  int get hashCode => _fieldSet._calculateHashCode();
+
+  @override
+  bool operator ==(other) {
+    if(identical(this, other)) {
+      return true;
+    }
+
+    if(other is SchemaType) {
+      return _fieldSet._calculateEquality(other._fieldSet);
+    }
+
+    return false;
+  } 
+
 }

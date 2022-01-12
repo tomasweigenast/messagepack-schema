@@ -143,3 +143,38 @@ class AnotherType extends SchemaType<AnotherType> {
     return AnotherType._();
   }
 }
+
+class ListAndMapType extends SchemaType<ListAndMapType> {
+  static final SchemaTypeInfo<ListAndMapType> _listAndMapType = SchemaTypeInfo(
+    fullName: "example.ListAndMapType",
+    fieldSet: SchemaFieldSet(SchemaFieldSetBuilder()
+      .addField(SchemaField.list<double>("list_double_value", "listDoubleValue", 0, SchemaFieldValueType.float64, null))
+      .addField(SchemaField.map<String, bool>("map_string_bool_value", "mapStringBoolValue", 1, SchemaFieldValueType.string, SchemaFieldValueType.boolean, null))
+    )
+  );
+  
+  @override
+  SchemaTypeInfo<ListAndMapType> get info_ => _listAndMapType;
+
+  ListAndMapType._() : super();
+
+  List<double> get listDoubleValue => $readValue_(0);
+  set listDoubleValue(List<double> value) => $setValue_(0, value);
+
+  Map<String, bool> get mapStringBoolValue => $readValue_(1);
+  set mapStringBoolValue(Map<String, bool> value) => $setValue_(1, value);
+
+  factory ListAndMapType({
+    List<double>? listDoubleValue, 
+    Map<String, bool>? mapStringBoolValue}) {
+    var instance = ListAndMapType.createEmpty();
+    instance.listDoubleValue = listDoubleValue ?? instance.info_.fieldSet[1]!.defaultValue;
+    instance.mapStringBoolValue = mapStringBoolValue ?? instance.info_.fieldSet[2]!.defaultValue;
+    
+    return instance;
+  }
+
+  factory ListAndMapType.createEmpty() {
+    return ListAndMapType._();
+  }
+}

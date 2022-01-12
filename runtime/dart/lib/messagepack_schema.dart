@@ -26,4 +26,4 @@ part './src/schema_field_set.dart';
 part './src/schema_type_info.dart';
 part './src/json_encoder.dart';
 part './src/buffer_encoder.dart';
-part './src/utils.dart';
+part 'src/equality_utils.dart';
