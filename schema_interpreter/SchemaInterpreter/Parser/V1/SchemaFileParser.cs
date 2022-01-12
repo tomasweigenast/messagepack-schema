@@ -20,7 +20,6 @@ namespace SchemaInterpreter.Parser.V1
         {
             string line;
             int lineIndex = 0;
-            bool commentStarted = false;
             int? version = null;
 
             while ((line = await reader.ReadLineAsync()) != null)
@@ -34,75 +33,87 @@ namespace SchemaInterpreter.Parser.V1
 
                 Logger.Debug("Removed carriage and tabs.");
 
-                // Ignore comments
-                if (line.StartsWith('/'))
+                // Remove any comment from the line
+                int commentIndex = line.LastIndexOf('/');
+                if(commentIndex != -1)
                 {
-                    commentStarted = true;
-                    Logger.Debug("Comment started.");
-                    continue;
+                    line = line[commentIndex..];
+                    Logger.Debug($"Removed comment at index {commentIndex}");
                 }
 
-                // Ingnore double line comment
-                else if (line.StartsWith("*"))
-                    if (commentStarted)
-                    {
-                        Logger.Debug("Multine comment is following.");
-                        continue;
-                    }
-                    else
-                        Check.ThrowInvalidSchema("Multiline comments should start with a slash: '/'");
+                //if (line.StartsWith('/'))
+                //{
+                //    if(commentStarted)
+                //    {
+                //        commentStarted = false;
+                //        Logger.Debug("Multiline comment ended.");
+                //    }
+                //    else
+                //    {
+                //        commentStarted = true;
+                //        Logger.Debug("Comment started.");
+                //    }
+                //    continue;
+                //}
+
+                //// Ingnore double line comment
+                //else if (line.StartsWith("*"))
+                //    if (commentStarted)
+                //    {
+                //        Logger.Debug("Multine comment is following.");
+                //        continue;
+                //    }
+                //    else
+                //        Check.ThrowInvalidSchema("Multiline comments should start with a slash: '/'");
 
                 // Start interpreting
+                if(line.StartsWith("version:"))
+                {
+                    version = ReadVersion(line);
+                    Logger.Debug("Version read.");
+                    continue;
+                }
                 else
                 {
-                    if (line.StartsWith("version:"))
-                    {
-                        version = ReadVersion(line);
-                        Logger.Debug("Version read.");
-                        continue;
-                    }
+                    if (version == null)
+                        Check.ThrowInvalidSchema("Schema does not specify a version. It must be the first line to be set.");
                     else
                     {
-                        if (version == null)
-                            Check.ThrowInvalidSchema("Schema does not specify a version. It must be the first line to be set.");
-                        else
+                        char lastLineChar = line[^1];
+                        switch (lastLineChar)
                         {
-                            char lastLineChar = line[^1];
-                            switch (lastLineChar)
-                            {
-                                // Starts a new type
-                                case '{':
-                                    Logger.Debug("Detected new type. Reading...");
+                            // Starts a new type
+                            case '{':
+                                Logger.Debug("Detected new type. Reading...");
 
-                                    if (ParserContext.Current.CurrentTypeBuilder != null)
-                                        Check.ThrowInvalidSchema("When creating a type, closing tags should be present before creating a new one.");
+                                if (ParserContext.Current.CurrentTypeBuilder != null)
+                                    Check.ThrowInvalidSchema("When creating a type, closing tags should be present before creating a new one.");
 
-                                    var (typeName, modifier) = ReadTypeNameAndModifier(line);
-                                    ParserContext.Current.EnsureEmptyTypeName(typeName);
-                                    ParserContext.Current.CurrentTypeBuilder = new SchemaTypeBuilder(typeName, packageName, modifier);
-                                    break;
+                                var (typeName, modifier) = ReadTypeNameAndModifier(line);
+                                ParserContext.Current.EnsureEmptyTypeName(typeName);
+                                ParserContext.Current.CurrentTypeBuilder = new SchemaTypeBuilder(typeName, packageName, modifier);
+                                break;
 
-                                // Ends a type.
-                                case '}':
-                                    Logger.Debug("Detected end of new type. Building...");
+                            // Ends a type.
+                            case '}':
+                                Logger.Debug("Detected end of new type. Building...");
 
-                                    if (ParserContext.Current.CurrentTypeBuilder == null)
-                                        Check.ThrowInvalidSchema("Before closing a type, a new one must be created.");
+                                if (ParserContext.Current.CurrentTypeBuilder == null)
+                                    Check.ThrowInvalidSchema("Before closing a type, a new one must be created.");
 
-                                    ParserContext.Current.Add(ParserContext.Current.CurrentTypeBuilder.Build(), packageName);
-                                    ParserContext.Current.CurrentTypeBuilder = null;
-                                    break;
+                                ParserContext.Current.Add(ParserContext.Current.CurrentTypeBuilder.Build(), packageName);
+                                ParserContext.Current.CurrentTypeBuilder = null;
+                                break;
 
-                                default:
-                                    if (ParserContext.Current.CurrentTypeBuilder == null)
-                                        Check.ThrowInvalidSchema("Before specifying a field, a type must be created.");
+                            default:
+                                if (ParserContext.Current.CurrentTypeBuilder == null)
+                                    Check.ThrowInvalidSchema("Before specifying a field, a type must be created.");
 
-                                    Logger.Debug("Reading type field...");
+                                Logger.Debug("Reading type field...");
 
-                                    var typeField = ReadTypeField(line);
-                                    ParserContext.Current.CurrentTypeBuilder.AddField(typeField);
-                                    break;
-                            }
+                                var typeField = ReadTypeField(line);
+                                ParserContext.Current.CurrentTypeBuilder.AddField(typeField);
+                                break;
                         }
                     }
                 }
@@ -165,55 +176,6 @@ namespace SchemaInterpreter.Parser.V1
             return new SchemaTypeField(fieldName, fieldIndex.Value, fieldType, rawDefaultValue, isNullable, metadata, ParserContext.Current.CurrentLine);
         }
 
-        private static SchemaTypeField ReadTypeField_(string input)
-        {
-            // If the input contains metadata
-            string metadataInput = null;
-            if(input.Contains(Keywords.Metadata))
-            {
-                int indexOfMetadata = input.IndexOf(Keywords.Metadata);
-                metadataInput = input[indexOfMetadata..];
-                input = input.Replace(metadataInput, "");
-            }
-
-            // Get a default value if it contains it
-            string rawDefaultValue = null;
-            if (input.Contains(Keywords.DefaultValue))
-            {
-                int indexOfDefaultValue = input.IndexOf(Keywords.DefaultValue);
-                rawDefaultValue = input[indexOfDefaultValue..];
-                input = input.Replace(rawDefaultValue, "");
-            }
-
-            var modifier = ParserContext.Current.CurrentTypeBuilder.Modifier;
-            string[] splitChars = ParserContext.Current.CurrentTypeBuilder.Modifier == null ? new string[] { ":", " " } : new string[] { " " };
-            string[] tokens = input.Split(splitChars, StringSplitOptions.RemoveEmptyEntries);
-
-            if (modifier == null && tokens.Length < 3)
-                Check.ThrowInvalidSchema("Invalid type field declaration.");
-            else if (modifier == SchemaTypeModifier.Enum && tokens.Length != 2)
-                Check.ThrowInvalidSchema("Invalid enum type field declaration.");
-
-            string fieldName = tokens[0];
-            if (!int.TryParse(tokens[modifier == null ? 2 : 1], out int fieldIndex))
-                Check.ThrowInvalidSchema("Invalid field index.");
-
-            ParserContext.Current.EnsureEmptyTypeFieldIndex(fieldIndex);
-
-            if (modifier == SchemaTypeModifier.Enum)
-                return new SchemaTypeField(fieldName, fieldIndex, null, null, false, null, ParserContext.Current.CurrentLine);
-
-            bool isNullable = fieldName[^1] == '?';
-            if (isNullable)
-                fieldName = fieldName[0..^1];
-
-            SchemaTypeFieldValueType fieldValueType = GetValueType(tokens[1]);
-
-            IDictionary<string, object> metadata = metadataInput != null ? ReadMetadata(metadataInput) : null;
-
-            return new SchemaTypeField(fieldName, fieldIndex, fieldValueType, rawDefaultValue, isNullable, metadata, ParserContext.Current.CurrentLine);
-        }
-
         private static SchemaTypeFieldValueType GetValueType(string input)
         {
             string[] tokens = input.Trim().Replace(")", "").Split("(", StringSplitOptions.TrimEntries);
@@ -267,17 +229,10 @@ namespace SchemaInterpreter.Parser.V1
 
             SchemaTypeModifier? modifier = null;
             if (parts.Length == 3)
-                modifier = ParseModifier(parts[2]);
+                modifier = parts[2].ToSchemaTypeModifier();
 
             return (typeName, modifier);
         }
-
-        private static SchemaTypeModifier ParseModifier(string modifier)
-            => modifier switch
-            {
-                Keywords.Enum => SchemaTypeModifier.Enum,
-                _ => throw Check.InvalidSchema($"Invalid schema type modifier '{modifier}'")
-            };
 
         private static IDictionary<string, object> ReadMetadata(string input)
         {

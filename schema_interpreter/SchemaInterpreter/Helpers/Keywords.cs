@@ -4,6 +4,7 @@
     {
         public const string Type = "type";
         public const string Enum = "enum";
+        public const string Union = "union";
         public const string StartNewType = "{";
         public const string EndNewType = "}";
         public const string Metadata = "@";

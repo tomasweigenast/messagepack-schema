@@ -58,6 +58,18 @@ namespace SchemaInterpreter.Parser.Definition
 
     public enum SchemaTypeModifier
     {
-        Enum
+        Enum,
+        Union
+    }
+
+    public static class SchemaTypeModifierExtensions
+    {
+        public static SchemaTypeModifier ToSchemaTypeModifier(this string modifier)
+            => modifier switch
+            {
+                Keywords.Enum => SchemaTypeModifier.Enum,
+                Keywords.Union => SchemaTypeModifier.Union,
+                _ => throw Check.InvalidSchema($"Invalid schema type modifier '{modifier}'")
+            };
     }
 }
