@@ -24,7 +24,7 @@ namespace SchemaInterpreter.Plugin
         /// <param name="path">The path to the binary.</param>
         /// <param name="outputFolder">The path to the folder where to generate the files.</param>
         /// <param name="files">The list of files to serialize and send to the plugin.</param>
-        public static async Task RunPluginAsync(string path, string outputFolder, IEnumerable<SchemaFile> files, PluginEncoding encoding)
+        public static async Task RunPluginAsync(string path, string outputFolder, IEnumerable<SchemaPackage> files, PluginEncoding encoding)
         {
             Logger.Debug("Creating process info to run the plugin.");
             if (CommonHelpers.IsDirectory(outputFolder) != true)

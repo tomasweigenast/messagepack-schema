@@ -30,7 +30,7 @@ namespace SchemaInterpreter.Parser
                 SchemaFieldValueTypes.Int32 => int.Parse(input),
                 SchemaFieldValueTypes.Uint64 => ulong.Parse(input),
                 SchemaFieldValueTypes.Int64 => long.Parse(input),
-                SchemaFieldValueTypes.Binary => Convert.FromBase64String(input),
+                SchemaFieldValueTypes.Binary => throw Check.InvalidSchema("binary fields cannot declare default values"),
                 SchemaFieldValueTypes.List => isNested ? ThrowIsNested() : ParseList(input, valueType),
                 SchemaFieldValueTypes.Map => isNested ? ThrowIsNested() : ParseMap(input, valueType),
                 SchemaFieldValueTypes.Custom => ParseCustom(input),
@@ -89,6 +89,7 @@ namespace SchemaInterpreter.Parser
 
             string typeId = CommonHelpers.CalculateMD5(typeName);
 
+            // TODO: add check to disallow default values when struct or union.
             ParserContext.Current.EnsureTypeId(typeId, typeName, package);
             ParserContext.Current.EnsureTypeValue(value, typeId, typeName, package);
 

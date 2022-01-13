@@ -1,7 +1,7 @@
 ﻿using SchemaInterpreter.Parser.Definition;
 using System.Collections.Generic;
 
-namespace SchemaInterpreter.Parser
+namespace SchemaInterpreter.Parser.Builder
 {
     /// <summary>
     /// Provides methods to build a <see cref="SchemaType"/>
@@ -14,15 +14,18 @@ namespace SchemaInterpreter.Parser
         private SchemaTypeModifier? mModifier;
 
         public SchemaTypeModifier? Modifier => mModifier;
+        public IEnumerable<SchemaTypeField> Fields => mFields.Values;
 
-        public SchemaTypeBuilder() { }
+        public SchemaTypeBuilder() 
+        {
+            mFields = new Dictionary<int, SchemaTypeField>();
+        }
 
-        public SchemaTypeBuilder(string typeName, string package, SchemaTypeModifier? modifier) 
+        public SchemaTypeBuilder(string typeName, string package, SchemaTypeModifier? modifier) : this()
         {
             mTypeName = typeName;
             mPackage = package;
             mModifier = modifier;
-            mFields = new Dictionary<int, SchemaTypeField>();
         }
 
         public SchemaTypeBuilder SetTypeName(string typeName)

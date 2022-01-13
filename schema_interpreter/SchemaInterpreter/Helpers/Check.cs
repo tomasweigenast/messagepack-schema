@@ -1,6 +1,5 @@
 ﻿using SchemaInterpreter.Exceptions;
 using SchemaInterpreter.Parser;
-using System;
 
 namespace SchemaInterpreter.Helpers
 {
@@ -24,12 +23,12 @@ namespace SchemaInterpreter.Helpers
 
         public static void ThrowInternal(string message)
         {
-            throw new Exception(message);
+            throw new InternalException(message);
         }
 
-        public static Exception Internal(string message)
+        public static InternalException Internal(string message)
         {
-            return new Exception(message);
+            return new InternalException(message);
         }
     }
 }

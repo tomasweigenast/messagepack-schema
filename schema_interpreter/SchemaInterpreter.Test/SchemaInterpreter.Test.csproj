@@ -35,6 +35,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="test10.mpack">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="test9.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

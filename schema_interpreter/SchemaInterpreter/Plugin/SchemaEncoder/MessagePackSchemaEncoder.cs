@@ -10,10 +10,10 @@ namespace SchemaInterpreter.Plugin.Encoder
 {
     public class MessagePackSchemaEncoder : ISchemaEncoder
     {
-        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, PluginEncoding encoding, IEnumerable<SchemaFile> files)
+        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, PluginEncoding encoding, IEnumerable<SchemaPackage> files)
         {
             var schema = new PluginInterpretedSchema { Encoding = encoding };
-            foreach(SchemaFile file in files)
+            foreach(SchemaPackage file in files)
             {
                 Dictionary<string, object> fileMap = new()
                 {

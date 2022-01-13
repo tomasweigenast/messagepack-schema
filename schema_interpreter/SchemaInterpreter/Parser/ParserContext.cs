@@ -1,5 +1,8 @@
-﻿using SchemaInterpreter.Helpers;
+﻿using SchemaInterpreter.Exceptions;
+using SchemaInterpreter.Helpers;
+using SchemaInterpreter.Parser.Builder;
 using SchemaInterpreter.Parser.Definition;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -12,11 +15,12 @@ namespace SchemaInterpreter.Parser
     public class ParserContext
     {
         private static ParserContext mInstance;
-        private static readonly IEqualityComparer<SchemaFile> mSchemaFileEqualityComparer = EqualityComparerFactory.Create<SchemaFile>(
+        private static readonly IEqualityComparer<SchemaPackage> mSchemaFileEqualityComparer = EqualityComparerFactory.Create<SchemaPackage>(
             (a, b) => a.Name == b.Name,
             x => x.Name.GetHashCode());
 
-        private ICollection<SchemaFile> mFiles; // The list of schema files that has been detected.
+        private ICollection<SchemaPackage> mPackages; // The list of schema files that has been detected.
+        private SchemaPackage mCurrentPackage;
 
         /// <summary>
         /// The current parser context, if any.
@@ -29,69 +33,53 @@ namespace SchemaInterpreter.Parser
         public FileLine CurrentLine { get; set; }
 
         /// <summary>
-        /// The current type builder
+        /// If a type is being built, its builder class.
         /// </summary>
         public SchemaTypeBuilder CurrentTypeBuilder { get; set; }
 
         /// <summary>
+        /// The current package being built.
+        /// </summary>
+        public SchemaPackage CurrentPackage
+        {
+            get => mCurrentPackage;
+            set
+            {
+                mCurrentPackage = value;
+                if (!mPackages.Any(x => x.Name == value.Name))
+                    mPackages.Add(value);
+            }
+        }
+
+        /// <summary>
         /// The list of files added to the current context.
         /// </summary>
-        public IEnumerable<SchemaFile> Files => mFiles;
+        public IEnumerable<SchemaPackage> Packages => mPackages;
 
         private ParserContext()
         {
-            mFiles = new HashSet<SchemaFile>(mSchemaFileEqualityComparer);
+            mPackages = new HashSet<SchemaPackage>(mSchemaFileEqualityComparer);
         }
 
         /// <summary>
         /// Creates a new parser context instance
         /// </summary>
-        public static void Create()
+        public static ParserContext CreateContext()
         {
             mInstance = new();
+            return mInstance;
         }
 
         /// <summary>
-        /// Finds a type by its id.
+        /// Builds the current <see cref="SchemaTypeBuilder"/> and adds it to the current package.
         /// </summary>
-        /// <param name="id">The type id.</param>
-        public SchemaType FindType(string id) 
-            => mFiles.SelectMany(x => x.Types).FirstOrDefault(x => x.Id == id);
-
-        /// <summary>
-        /// Finds a type by its full name.
-        /// </summary>
-        /// <param name="nane">The full name of the type.</param>
-        public SchemaType FindTypeByFullName(string fullName) 
-            => mFiles.SelectMany(x => x.Types).FirstOrDefault(x => x.FullName == fullName);
-        
-        /// <summary>
-        /// Adds a new schema type to a package.
-        /// </summary>
-        public void Add(SchemaType type, string package)
+        public void BuildCurrentTypeBuilder()
         {
-            SchemaFile file = mFiles.FirstOrDefault(x => x.Name == package);
-            if (file == null)
-                Check.ThrowInternal($"Schema package '{package}' not found.");
+            if(CurrentPackage == null)
+                Check.ThrowInternal("No package is selected to add a schema type.");
 
-            file.AddType(type);
-        }
-
-        /// <summary>
-        /// Adds a new schema package.
-        /// </summary>
-        public void AddPackage(SchemaFile file)
-        {
-            mFiles.Add(file);
-        }
-
-        /// <summary>
-        /// Ensures a type name is not already in use.
-        /// </summary>
-        public void EnsureEmptyTypeName(string name)
-        {
-            if (Files.SelectMany(x => x.Types).Any(x => x.Name.ToLower() == name.ToLower()))
-                Check.ThrowInvalidSchema($"Type name {name} is already declared.");
+            CurrentPackage.AddType(CurrentTypeBuilder.Build());
+            CurrentTypeBuilder = null;
         }
 
         /// <summary>
@@ -99,7 +87,7 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void EnsureTypeId(string typeId, string typeName, string package)
         {
-            var enumerable = Files;
+            var enumerable = Packages;
             if (package != null)
                 enumerable = enumerable.Where(x => x.Name == package);
             else
@@ -114,7 +102,7 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void EnsureTypeValue(string value, string typeId, string typeName, string package)
         {
-            var enumerable = Files;
+            var enumerable = Packages;
             if (package != null)
                 enumerable = enumerable.Where(x => x.Name == package);
             else
@@ -134,22 +122,41 @@ namespace SchemaInterpreter.Parser
         }
 
         /// <summary>
+        /// Ensures a field name is not in use.
+        /// </summary>
+        public void EnsureEmptyTypeFieldName(string name)
+        {
+            if (CurrentTypeBuilder.Fields.Any(x => x.Name == name))
+                Check.ThrowInvalidSchema("Field name already defined.");
+        }
+
+        /// <summary>
         /// Parses and generates all the default values for all types.
         /// </summary>
         public void GenerateDefaultValues()
         {
             Logger.Debug("Generating default values.");
 
-            foreach (SchemaTypeField field in mFiles.SelectMany(x => x.Types).SelectMany(x => x.Fields).Where(x => x.HasDefaultValue && !x.IsDefaultValueGenerated))
+            foreach (SchemaTypeField field in mPackages.SelectMany(x => x.Types).SelectMany(x => x.Fields).Where(x => x.HasDefaultValue && !x.IsDefaultValueGenerated))
             {
                 Logger.Debug($"Generating default value for field {field.Name}.");
 
                 // Set the current line to the line where the field is declared
                 CurrentLine = field.Line;
 
-                string rawDefaultValue = field.DefaultValue as string;
-                object value = ValueParser.Parse(rawDefaultValue, field.ValueType);
-                field.SetDefaultValue(value);
+                try
+                {
+                    string rawDefaultValue = field.DefaultValue as string;
+                    object value = ValueParser.Parse(rawDefaultValue, field.ValueType);
+                    field.SetDefaultValue(value);
+                }
+                catch(Exception ex)
+                {
+                    if (ex is OverflowException)
+                        Check.ThrowInvalidSchema($"Invalid default value for field ${field.Name}. It overflows the value type supported size.");
+                    else 
+                        throw;
+                }
             }
         }
 
@@ -160,7 +167,7 @@ namespace SchemaInterpreter.Parser
         {
             Logger.Debug("Running type verification.");
 
-            foreach (SchemaTypeField field in mFiles.SelectMany(x => x.Types).Where(x => x.Modifier == null).SelectMany(x => x.Fields).Where(x => !SchemaFieldValueTypes.Primitives.Contains(x.ValueType.TypeName)))
+            foreach (SchemaTypeField field in mPackages.SelectMany(x => x.Types).Where(x => x.Modifier == null).SelectMany(x => x.Fields).Where(x => !SchemaFieldValueTypes.Primitives.Contains(x.ValueType.TypeName)))
             {
                 Logger.Debug($"Verifying field {field.Name}.");
 
@@ -205,7 +212,7 @@ namespace SchemaInterpreter.Parser
         {
             Logger.Debug("Verifying enum types.");
 
-            foreach (SchemaType type in mFiles.SelectMany(x => x.Types).Where(x => x.Modifier == SchemaTypeModifier.Enum))
+            foreach (SchemaType type in mPackages.SelectMany(x => x.Types).Where(x => x.Modifier == SchemaTypeModifier.Enum))
             {
                 if(type.Fields.First().Index != 0)
                     Check.ThrowInvalidSchema("First enum field should have 0-index.");
@@ -218,11 +225,11 @@ namespace SchemaInterpreter.Parser
         /// <summary>
         /// Gets the compiled files and clear the current ParserContext
         /// </summary>
-        public IEnumerable<SchemaFile> GetCompiledAndClear()
+        public IEnumerable<SchemaPackage> GetCompiledAndClear()
         {
             Logger.Debug("Compiling and clearing...");
 
-            var files = mFiles.ToList();
+            var files = mPackages.ToList();
             Clear();
             return files;
         }
@@ -233,7 +240,7 @@ namespace SchemaInterpreter.Parser
         public void Clear()
         {
             mInstance = null;
-            mFiles = new HashSet<SchemaFile>(mSchemaFileEqualityComparer);
+            mPackages = new HashSet<SchemaPackage>(mSchemaFileEqualityComparer);
             CurrentTypeBuilder = null;
             CurrentLine = null;
         }

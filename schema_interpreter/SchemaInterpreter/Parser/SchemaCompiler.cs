@@ -11,16 +11,16 @@ namespace SchemaInterpreter.Parser.V1
     /// </summary>
     public static class SchemaCompiler
     {
-        private static readonly ISchemaFileParser mParser = new SchemaFileParser();
+        private static readonly ISchemaFileParser mParser = new SchemaFileParserV1();
 
         /// <summary>
         /// Compiles a list of files.
         /// </summary>
         /// <param name="path">The path containing the directory or file.</param>
-        public static async Task<IEnumerable<SchemaFile>> CompileFiles(string path)
+        public static async Task<IEnumerable<SchemaPackage>> CompileFiles(string path)
         {
             // Create a new ParserContext
-            ParserContext.Create();
+            ParserContext.CreateContext();
 
             // Compile files
             await InternalCompile(path);
@@ -45,11 +45,9 @@ namespace SchemaInterpreter.Parser.V1
                 throw new FileLoadException("Invalid path.", path);
             else if (isDir == true)
             {
-                List<SchemaFile> schemaFiles = new();
                 foreach (var file in Directory.EnumerateFiles(path, $"*{Keywords.FileExtension}", SearchOption.TopDirectoryOnly))
                 {
                     string packageName = Path.GetFileNameWithoutExtension(file);
-                    ParserContext.Current.AddPackage(new SchemaFile(packageName, 1));
 
                     using StreamReader reader = OpenFile(file);
                     await mParser.ParseFile(reader, packageName);
@@ -62,7 +60,6 @@ namespace SchemaInterpreter.Parser.V1
                     throw new FileLoadException("Invalid file extension.", path);
 
                 string packageName = Path.GetFileNameWithoutExtension(path);
-                ParserContext.Current.AddPackage(new SchemaFile(packageName, 1));
 
                 using StreamReader reader = OpenFile(path);
                 await mParser.ParseFile(reader, packageName);

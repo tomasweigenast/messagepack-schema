@@ -2,10 +2,10 @@
 // Test file parser
 // This should be interpreted as a comment
 //
-version:1
+version:1 // The version of the schema file
 
 type MyType {
-	string_value:string 0 = "hello world"
+	string_value:string 0 = "hello world" // This is a schema file.
 	bool_value:boolean 1 = false
 	float32_value:float32 2 = 12.32
 	float64_value:float64 3 = 36.232
