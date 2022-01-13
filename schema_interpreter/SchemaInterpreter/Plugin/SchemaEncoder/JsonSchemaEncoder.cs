@@ -11,7 +11,7 @@ namespace SchemaInterpreter.Plugin.Encoder
 {
     public class JsonSchemaEncoder : ISchemaEncoder
     {
-        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, PluginEncoding encoding, IEnumerable<SchemaPackage> packages)
+        public async Task<ReadOnlyMemory<byte>> Encode(PluginEncoding encoding, IEnumerable<SchemaPackage> packages)
         {
             var schema = new PluginInterpretedSchema { Encoding = encoding };
             foreach (SchemaPackage package in packages)

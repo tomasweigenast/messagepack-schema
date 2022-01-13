@@ -15,6 +15,6 @@ namespace SchemaInterpreter.Plugin.Encoder
         /// </summary>
         /// <param name="outputPath">The output path where to generate those files.</param>
         /// <param name="packages">The packages to encode.</param>
-        public Task<ReadOnlyMemory<byte>> Encode(string outputPath, PluginEncoding encoding, IEnumerable<SchemaPackage> packages);
+        public Task<ReadOnlyMemory<byte>> Encode(PluginEncoding encoding, IEnumerable<SchemaPackage> packages);
     }
 }

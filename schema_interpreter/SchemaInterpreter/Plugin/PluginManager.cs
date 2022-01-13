@@ -64,7 +64,7 @@ namespace SchemaInterpreter.Plugin
 
             // Serialize entries
             var encoder = mEncoders[encoding]();
-            var buffer = await encoder.Encode(outputFolder, encoding, files);
+            var buffer = await encoder.Encode(encoding, files);
 
             Logger.Debug($"Buffer size: {buffer.Length}");
             Logger.Debug("Writing buffer to the plugin...");

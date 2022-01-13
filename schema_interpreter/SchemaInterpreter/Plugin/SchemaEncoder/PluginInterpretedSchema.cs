@@ -11,7 +11,7 @@ namespace SchemaInterpreter.Plugin.SchemaEncoder
     [MessagePackObject]
     public class PluginInterpretedSchema
     {
-        [JsonPropertyName("files")]
+        [JsonPropertyName("packages")]
         [Key(0)]
         public List<object> Files { get; set; }
 
