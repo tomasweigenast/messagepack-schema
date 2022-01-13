@@ -37,6 +37,9 @@ namespace SchemaInterpreter.Parser.V1
             // Verify enums
             ParserContext.Current.VerifyEnums();
 
+            // Rename imports
+            ParserContext.Current.RenameImports();
+
             // Return compiled files
             return ParserContext.Current.GetCompiledAndClear();
         }

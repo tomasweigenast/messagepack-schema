@@ -1,6 +1,0 @@
-﻿version:1
-
-type VehicleType enum {
-	undefined 1
-	car 2
-}

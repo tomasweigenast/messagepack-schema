@@ -11,25 +11,26 @@ namespace SchemaInterpreter.Plugin.Encoder
 {
     public class JsonSchemaEncoder : ISchemaEncoder
     {
-        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, PluginEncoding encoding, IEnumerable<SchemaPackage> files)
+        public async Task<ReadOnlyMemory<byte>> Encode(string outputPath, PluginEncoding encoding, IEnumerable<SchemaPackage> packages)
         {
             var schema = new PluginInterpretedSchema { Encoding = encoding };
-            foreach (SchemaPackage file in files)
+            foreach (SchemaPackage package in packages)
             {
-                Dictionary<string, object> fileMap = new()
+                Dictionary<string, object> packageMap = new()
                 {
-                    { "version", file.Version },
-                    { "name", file.Name },
+                    { "id", package.Id },
+                    { "version", package.Version },
+                    { "name", package.Name },
+                    { "imports", package.Imports },
                 };
 
-                List<object> types = new(file.Types.Count);
-                foreach(SchemaType type in file.Types)
+                List<object> types = new(package.Types.Count);
+                foreach(SchemaType type in package.Types)
                 {
                     Dictionary<string, object> typeMap = new()
                     {
                         { "id", type.Id },
                         { "name", type.Name },
-                        //{ "package", type.Package },
                         { "fullName", type.FullName },
                         { "modifier", WriteModifier(type.Modifier) },
                     };
@@ -54,8 +55,8 @@ namespace SchemaInterpreter.Plugin.Encoder
                     types.Add(typeMap);
                 }
 
-                fileMap["types"] = types;
-                schema.Files.Add(fileMap);
+                packageMap["types"] = types;
+                schema.Files.Add(packageMap);
             }
 
             using MemoryStream stream = new();

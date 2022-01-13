@@ -256,6 +256,32 @@ namespace SchemaInterpreter.Parser
         }
 
         /// <summary>
+        /// Renames all the imports converting them from names to ids.
+        /// This needs to be called after <see cref="VerifyImports"/>
+        /// </summary>
+        public void RenameImports()
+        {
+            foreach (SchemaPackage package in mPackages.Where(x => x.Imports.Count > 0))
+            {
+                var newHashset = new HashSet<string>(package.Imports.Count);
+                foreach (string import in package.Imports)
+                {
+                    string packageId;
+                    if (import.Contains('/'))
+                    {
+                        string dir = string.Join('/', import.Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1));
+                        string packageName = import[(import.LastIndexOf('/') + 1)..];
+                        packageId = CommonHelpers.CalculateMD5($"{dir}.{packageName}");
+                    }
+                    else
+                        packageId = CommonHelpers.CalculateMD5(import);
+
+                    newHashset.Add(packageId);
+                }
+            }
+        }
+
+        /// <summary>
         /// Gets the compiled files and clear the current ParserContext
         /// </summary>
         public IEnumerable<SchemaPackage> GetCompiledAndClear()

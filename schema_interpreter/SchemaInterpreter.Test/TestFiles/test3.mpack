@@ -1,9 +1,0 @@
-﻿version:1
-
-type VehicleType enum {
-	undefined 0
-	car 1
-	motorbike 2
-	bike 3
-	furgo 4
-}
