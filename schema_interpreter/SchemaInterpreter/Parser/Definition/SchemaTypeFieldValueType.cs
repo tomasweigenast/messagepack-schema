@@ -1,4 +1,6 @@
-﻿namespace SchemaInterpreter.Parser.Definition
+﻿using System.Linq;
+
+namespace SchemaInterpreter.Parser.Definition
 {
     public abstract class SchemaTypeFieldValueType
     {
@@ -21,7 +23,17 @@
             mTypeCode = typeCode;
         }
 
-        public override string ToString() => TypeName;
+        public override string ToString()
+        {
+            if (this is ListSchemaFieldValueType listType)
+                return $"list({listType.ElementType.TypeName})";
+            else if (this is MapSchemaFieldValueType mapType)
+                return $"map({mapType.KeyType.TypeName},{mapType.ValueType.TypeName})";
+            else if (this is CustomSchemaFieldValueType custom)
+                return custom.CustomType;
+            else
+                return TypeName;
+        }
 
         public static SchemaTypeFieldValueType Primitive(string typeName)
             => new PrimitiveSchemaFieldValueType(typeName, SchemaFieldValueTypes.TypeCodes[typeName]);
@@ -31,6 +43,24 @@
         public static SchemaTypeFieldValueType List(SchemaTypeFieldValueType elementType) => new ListSchemaFieldValueType(elementType);
 
         public static SchemaTypeFieldValueType Map(SchemaTypeFieldValueType keyType, SchemaTypeFieldValueType valueType) => new MapSchemaFieldValueType(keyType, valueType);
+
+        public static SchemaTypeFieldValueType Parse(string input)
+        {
+            if (input.StartsWith("list"))
+            {
+                string elementType = input.Remove(0, 1).Remove(input.Length - 1);
+                return List(Parse(elementType));
+            }
+            else if (input.StartsWith("map"))
+            {
+                string[] elements = input.Remove(0, 1).Remove(input.Length - 1).Split(',');
+                return Map(Parse(elements[0]), Parse(elements[1]));
+            }
+            else if (SchemaFieldValueTypes.Primitives.Any(x => x == input))
+                return Primitive(input);
+            else
+                return Custom(input);
+        }
 
         public override bool Equals(object obj)
         {

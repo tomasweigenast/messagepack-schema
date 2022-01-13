@@ -90,7 +90,7 @@ namespace SchemaInterpreter.Parser
             string typeId = CommonHelpers.CalculateMD5(typeName);
 
             // TODO: add check to disallow default values when struct or union.
-            ParserContext.Current.EnsureTypeId(typeId, typeName, package);
+            ParserContext.Current.EnsureTypeId(typeId, typeName, package, CommonHelpers.CalculateMD5(package));
             ParserContext.Current.EnsureTypeValue(value, typeId, typeName, package);
 
             return new CustomTypeValue(typeId, value);

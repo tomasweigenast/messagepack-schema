@@ -35,34 +35,37 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="test10.mpack">
+    <None Update="TestFiles\import_test.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test9.mpack">
+    <None Update="TestFiles\test10.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test8.mpack">
+    <None Update="TestFiles\test9.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test7.mpack">
+    <None Update="TestFiles\test8.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test6.mpack">
+    <None Update="TestFiles\test7.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test5.mpack">
+    <None Update="TestFiles\test6.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test4.mpack">
+    <None Update="TestFiles\test5.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test3.mpack">
+    <None Update="TestFiles\test4.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test2.mpack">
+    <None Update="TestFiles\test3.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="test1.mpack">
+    <None Update="TestFiles\test2.mpack">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="TestFiles\test1.mpack">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

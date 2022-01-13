@@ -1,5 +1,4 @@
-﻿using SchemaInterpreter.Exceptions;
-using SchemaInterpreter.Helpers;
+﻿using SchemaInterpreter.Helpers;
 using SchemaInterpreter.Parser.Builder;
 using SchemaInterpreter.Parser.Definition;
 using System;
@@ -85,16 +84,16 @@ namespace SchemaInterpreter.Parser
         /// <summary>
         /// Checks if a type exists searching by its id. If not, an exception is thrown.
         /// </summary>
-        public void EnsureTypeId(string typeId, string typeName, string package)
+        public void EnsureTypeId(string typeId, string typeName, string packageName, string packageId)
         {
             var enumerable = Packages;
-            if (package != null)
-                enumerable = enumerable.Where(x => x.Name == package);
+            if (packageId != null)
+                enumerable = enumerable.Where(x => x.Id == packageId);
             else
                 enumerable = enumerable.Take(1);
 
             if (!enumerable.SelectMany(x => x.Types).Any(x => x.Id == typeId))
-                Check.ThrowInvalidSchema($"Type name {typeName} was not found.");
+                Check.ThrowInvalidSchema($"Type name {typeName} was not found in package {packageName}.");
         }
 
         /// <summary>
@@ -167,6 +166,24 @@ namespace SchemaInterpreter.Parser
         {
             Logger.Debug("Running type verification.");
 
+            void EnsureCustomType(CustomSchemaFieldValueType customType)
+            {
+                var (package, name) = SchemaTypeField.GetNameAndPackage(customType.CustomType);
+
+                // get the full package name, including its directory
+                var enumerable = Packages.Where(x => x.Name == package);
+
+                // verify package names
+                if (enumerable.Count() > 1)
+                    Check.ThrowInvalidSchema($"There are more than 1 package named {package} in the current scope. Try to rename your files.");
+
+                var schemaPackage = enumerable.FirstOrDefault();
+                if (schemaPackage == null)
+                    Check.ThrowInvalidSchema($"Packaged named {package} not found in the current scope.");
+
+                EnsureTypeId(SchemaTypeField.GetId(customType.CustomType), name, schemaPackage.Name, schemaPackage.Id);
+            }
+
             foreach (SchemaTypeField field in mPackages.SelectMany(x => x.Types).Where(x => x.Modifier == null).SelectMany(x => x.Fields).Where(x => !SchemaFieldValueTypes.Primitives.Contains(x.ValueType.TypeName)))
             {
                 Logger.Debug($"Verifying field {field.Name}.");
@@ -176,31 +193,22 @@ namespace SchemaInterpreter.Parser
                 if(field.ValueType is ListSchemaFieldValueType listValue && listValue.ElementType is CustomSchemaFieldValueType elementType)
                 {
                     Logger.Debug("Ensure list types.");
-                    var (name, package) = SchemaTypeField.GetNameAndPackage(elementType.CustomType);
-                    EnsureTypeId(SchemaTypeField.GetId(elementType.CustomType), name, package);
+                    EnsureCustomType(elementType);
                 }
                 else if(field.ValueType is MapSchemaFieldValueType mapValue)
                 {
                     Logger.Debug("Ensuring map types.");
 
                     if (mapValue.KeyType is CustomSchemaFieldValueType keyType)
-                    {
-                        var (name, package) = SchemaTypeField.GetNameAndPackage(keyType.CustomType);
-                        EnsureTypeId(SchemaTypeField.GetId(keyType.CustomType), name, package);
-                    }
+                        EnsureCustomType(keyType);
 
                     if(mapValue.ValueType is CustomSchemaFieldValueType valueType)
-                    {
-                        var (name, package) = SchemaTypeField.GetNameAndPackage(valueType.CustomType);
-                        EnsureTypeId(SchemaTypeField.GetId(valueType.CustomType), name, package);
-                    }
+                        EnsureCustomType(valueType);
                 }
                 else if(field.ValueType is CustomSchemaFieldValueType customType)
                 {
                     Logger.Debug("Ensuring custom type.");
-
-                    var (name, package) = SchemaTypeField.GetNameAndPackage(customType.CustomType);
-                    EnsureTypeId(SchemaTypeField.GetId(customType.CustomType), name, package);
+                    EnsureCustomType(customType);
                 }
             }
         }
@@ -219,6 +227,31 @@ namespace SchemaInterpreter.Parser
 
                 if (!type.Fields.Select(x => x.Index).IsConsecutive())
                     Check.ThrowInvalidSchema("Enum field indexes should be consecutive.");
+            }
+        }
+
+        /// <summary>
+        /// Verifies that all import statements in all files correspond to a valid and existing package.
+        /// </summary>
+        public void VerifyImports()
+        {
+            foreach (SchemaPackage package in mPackages.Where(x => x.Imports.Count > 0))
+            {
+                foreach(string import in package.Imports)
+                {
+                    string packageId;
+                    if (import.Contains('/'))
+                    {
+                        string dir = string.Join('/', import.Split('/', StringSplitOptions.RemoveEmptyEntries).SkipLast(1));
+                        string packageName = import[(import.LastIndexOf('/')+1)..];
+                        packageId = CommonHelpers.CalculateMD5($"{dir}.{packageName}");
+                    }
+                    else
+                        packageId = CommonHelpers.CalculateMD5(import);
+
+                    if (!mPackages.Any(x => x.Id == packageId))
+                        Check.ThrowInvalidSchema($"Imported package '{import}' does not exist in the current working directory.");
+                }
             }
         }
 

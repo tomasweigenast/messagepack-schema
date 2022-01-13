@@ -3,8 +3,8 @@ using SchemaInterpreter.Parser;
 using SchemaInterpreter.Parser.Builder;
 using SchemaInterpreter.Parser.Definition;
 using SchemaInterpreter.Parser.V1;
+using System;
 using System.Collections.Generic;
-using System.Linq;
 using Xunit;
 
 namespace SchemaInterpreter.Test
@@ -167,6 +167,128 @@ namespace SchemaInterpreter.Test
 
             line = "yeah:int32 7";
             Assert.IsType<InvalidSchemaException>(Record.Exception(() => SchemaFileParserV1.ReadField(line)));
+        }
+
+        [Fact]
+        public void Test_full_parser() 
+        {
+            static ParserContext GetParserContext(bool addPackage = true)
+            {
+                var context = ParserContext.CreateContext();
+                if(addPackage)
+                    context.CurrentPackage = new SchemaPackage("package1", 1);
+                
+                return context;
+            }
+
+            var context = GetParserContext();
+
+            var parser = new SchemaFileParserV1();
+            var type = TestUtils
+                .GetBuilder()
+                .WriteVersion(1)
+                .WriteImport("package1")
+                .WriteType(new SchemaType("MyModel", "package2", null, new SchemaTypeField[]
+                {
+                    new SchemaTypeField("string_value", 0, SchemaTypeFieldValueType.Parse("string"), null, false, null, null)
+                }))
+                .BuildReader();
+            parser.ParseFile(type, "package2").Wait();
+
+            Assert.Equal("package2", context.CurrentPackage.Name);
+            AssertExt.NotThrows(() => context.VerifyImports());
+
+            context = GetParserContext();
+
+            type = TestUtils
+                .GetBuilder()
+                .WriteVersion(1)
+                .WriteImport("package12")
+                .WriteType(new SchemaType("MyModel", "package3", null, new SchemaTypeField[]
+                {
+                    new SchemaTypeField("string_value", 0, SchemaTypeFieldValueType.Parse("string"), null, false, null, null)
+                }))
+                .BuildReader();
+            parser.ParseFile(type, "package3").Wait();
+
+            Assert.Equal("package3", context.CurrentPackage.Name);
+            AssertExt.Throws<InvalidSchemaException>(() => context.VerifyImports());
+
+            context = GetParserContext();
+            
+            type = TestUtils
+                .GetBuilder()
+                .WriteVersion(1)
+                .WriteImport("package1")
+                .WriteType(new SchemaType("MyModel", "package4", null, new SchemaTypeField[]
+                {
+                    new SchemaTypeField("imported_value", 0, SchemaTypeFieldValueType.Custom("package1.NonExistingModel"), null, false, null, null)
+                }))
+                .BuildReader();
+            parser.ParseFile(type, "package4").Wait();
+
+            Assert.Equal("package4", context.CurrentPackage.Name);
+            AssertExt.NotThrows(() => context.VerifyImports());
+            AssertExt.Throws<InvalidSchemaException>(() => context.VerifyAllTypes());
+
+            // add a type to core package to test
+            context = GetParserContext();
+            context.CurrentPackage.AddType(new SchemaType("MyPackage1Model", "package1", null, Array.Empty<SchemaTypeField>()));
+
+            type = TestUtils
+                .GetBuilder()
+                .WriteVersion(1)
+                .WriteImport("package1")
+                .WriteType(new SchemaType("MyModel", "package5", null, new SchemaTypeField[]
+                {
+                    new SchemaTypeField("imported_value", 0, SchemaTypeFieldValueType.Custom("package1.MyPackage1Model"), null, false, null, null)
+                }))
+                .BuildReader();
+            parser.ParseFile(type, "package5").Wait();
+
+            Assert.Equal("package5", context.CurrentPackage.Name);
+            AssertExt.NotThrows(() => context.VerifyImports());
+            AssertExt.NotThrows(() => context.VerifyAllTypes());
+
+            // add a type to package under a directory to test
+            context = GetParserContext(addPackage: false);
+            context.CurrentPackage = new SchemaPackage("utils/package1", 1);
+            context.CurrentPackage.AddType(new SchemaType("MyPackage1Model", "utils/package1", null, Array.Empty<SchemaTypeField>()));
+
+            type = TestUtils
+                .GetBuilder()
+                .WriteVersion(1)
+                .WriteImport("package1")
+                .WriteType(new SchemaType("MyModel", "package6", null, new SchemaTypeField[]
+                {
+                    new SchemaTypeField("imported_value", 0, SchemaTypeFieldValueType.Custom("package1.MyPackage1Model"), null, false, null, null)
+                }))
+                .BuildReader();
+            parser.ParseFile(type, "package6").Wait();
+
+            Assert.Equal("package6", context.CurrentPackage.Name);
+            AssertExt.Throws<InvalidSchemaException>(() => context.VerifyImports());
+            // verifyAllTypes is not called because if verifyImports fails, it not needed to run other verifications.
+            
+            // add a type to package under a directory to test
+            context = GetParserContext(addPackage: false);
+            context.CurrentPackage = new SchemaPackage("utils/package1", 1);
+            context.CurrentPackage.AddType(new SchemaType("MyPackage1Model", "utils/package1", null, Array.Empty<SchemaTypeField>()));
+
+            type = TestUtils
+                .GetBuilder()
+                .WriteVersion(1)
+                .WriteImport("utils/package1")
+                .WriteType(new SchemaType("MyModel", "package7", null, new SchemaTypeField[]
+                {
+                    new SchemaTypeField("imported_value", 0, SchemaTypeFieldValueType.Custom("package1.MyPackage1Model"), null, false, null, null)
+                }))
+                .BuildReader();
+            parser.ParseFile(type, "package7").Wait();
+
+            Assert.Equal("package7", context.CurrentPackage.Name);
+            AssertExt.NotThrows(() => context.VerifyImports());
+            AssertExt.NotThrows(() => context.VerifyAllTypes());
         }
     }
 }

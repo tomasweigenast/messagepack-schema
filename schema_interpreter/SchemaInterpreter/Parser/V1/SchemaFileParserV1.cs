@@ -21,9 +21,13 @@ namespace SchemaInterpreter.Parser.V1
 
         public async Task ParseFile(StreamReader reader, string packageName)
         {
+            // Convert package names to lowercase
+            packageName = packageName.ToLower();
+
             string line;
             int lineIndex = 0;
             int? version = null;
+            bool startReadingBody = false;
 
             while ((line = await reader.ReadLineAsync()) != null)
             {
@@ -36,7 +40,7 @@ namespace SchemaInterpreter.Parser.V1
                 Logger.Debug("Removed carriage and tabs.");
 
                 // Remove any comment from the line
-                int commentIndex = line.IndexOf('/');
+                int commentIndex = line.IndexOf("//");
                 if(commentIndex != -1)
                 {
                     line = line.Remove(commentIndex, line.Length - commentIndex).Trim();
@@ -55,12 +59,33 @@ namespace SchemaInterpreter.Parser.V1
                     Logger.Debug("Version read.");
                     continue;
                 }
+                else if (line.StartsWith("import "))
+                {
+                    if (startReadingBody)
+                        Check.ThrowInvalidSchema("Imports must be declared before any type.");
+
+                    // Read import statements
+                    try
+                    {
+                        string importedPackage = line.Split("import", StringSplitOptions.RemoveEmptyEntries).Select(x => x.Replace("\"", "").Trim()).ToArray()[0];
+                        bool added = ParserContext.Current.CurrentPackage.Imports.Add(importedPackage.ToLower());
+                        if (!added)
+                            Check.ThrowInvalidSchema($"Package {importedPackage} is already imported.");
+                    }
+                    catch
+                    {
+                        Check.ThrowInvalidSchema("Import statement must be followed by the package name to import.");
+                    }
+
+                }
                 else
                 {
                     if (version == null)
                         Check.ThrowInvalidSchema("Schema does not specify a version. It must be the first line to be set.");
                     else
                     {
+                        startReadingBody = true;
+
                         char lastLineChar = line[^1];
                         switch (lastLineChar)
                         {

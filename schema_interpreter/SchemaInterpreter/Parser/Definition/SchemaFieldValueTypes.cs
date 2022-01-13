@@ -56,6 +56,7 @@ namespace SchemaInterpreter.Parser.Definition
             Int16,
             Int32,
             Int64,
+            Binary,
         };
 
         public static readonly IDictionary<string, int> TypeCodes = new ReadOnlyDictionary<string, int>(new Dictionary<string, int>()

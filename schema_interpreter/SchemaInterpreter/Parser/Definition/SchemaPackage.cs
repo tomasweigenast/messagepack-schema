@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using SchemaInterpreter.Helpers;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SchemaInterpreter.Parser.Definition
@@ -9,7 +10,7 @@ namespace SchemaInterpreter.Parser.Definition
     public class SchemaPackage
     {
         // The list of types declared in the package.
-        private IList<SchemaType> mTypes;
+        private List<SchemaType> mTypes;
 
         /// <summary>
         /// The version of the schema file.
@@ -22,23 +23,41 @@ namespace SchemaInterpreter.Parser.Definition
         public IList<SchemaType> Types => mTypes.OrderBy(x => x.FullName).ToList();
 
         /// <summary>
+        /// The path of the directory where the package resides in.
+        /// For example: utils/common.mpack -> utils is the directory.
+        /// Another example: utils/shared/user.mpack -> utils/shared will be the directory.
+        /// </summary>
+        public string Directory { get; }
+
+        /// <summary>
         /// The name of the package.
         /// </summary>
         public string Name { get; }
 
         /// <summary>
+        /// The id of the package.
+        /// </summary>
+        public string Id { get; }
+
+        /// <summary>
         /// The list of package names that are imported in this package.
         /// </summary>
-        public List<string> Imports { get; set; }
+        public HashSet<string> Imports { get; set; }
 
-        public SchemaPackage(string packageName, int version, IEnumerable<string> imports)
+        public SchemaPackage(string packageName, int version)
         {
+            if (packageName.Contains('/'))
+            {
+                string[] tokens = packageName.Split('/');
+                packageName = tokens.Last();
+                Directory = string.Join('/', tokens.SkipLast(1));
+            }
+
             Name = packageName;
             Version = version;
-            mTypes = new List<SchemaType>();
-
-            if(imports != null)
-                Imports = new List<string>(imports);
+            Imports = new();
+            mTypes = new();
+            Id = Directory.IsNullOrWhitespace() ? CommonHelpers.CalculateMD5(Name) : CommonHelpers.CalculateMD5($"{Directory}.{Name}");
         }
 
         /// <summary>

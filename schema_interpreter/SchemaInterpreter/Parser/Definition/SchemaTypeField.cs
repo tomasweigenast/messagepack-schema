@@ -100,7 +100,7 @@ namespace SchemaInterpreter.Parser.Definition
             return CommonHelpers.CalculateMD5(name);
         }
 
-        public static (string name, string package) GetNameAndPackage(string input)
+        public static (string package, string name) GetNameAndPackage(string input)
         {
             string[] tokens = input.Split('.', StringSplitOptions.RemoveEmptyEntries);
             return (tokens[0], tokens.Length == 2 ? tokens[1] : null);

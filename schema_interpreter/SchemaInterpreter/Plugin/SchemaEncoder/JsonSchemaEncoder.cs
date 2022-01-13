@@ -29,7 +29,7 @@ namespace SchemaInterpreter.Plugin.Encoder
                     {
                         { "id", type.Id },
                         { "name", type.Name },
-                        { "package", type.Package },
+                        //{ "package", type.Package },
                         { "fullName", type.FullName },
                         { "modifier", WriteModifier(type.Modifier) },
                     };

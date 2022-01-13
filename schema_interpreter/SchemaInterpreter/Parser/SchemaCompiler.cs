@@ -25,6 +25,9 @@ namespace SchemaInterpreter.Parser.V1
             // Compile files
             await InternalCompile(path);
 
+            // Verify all imported packages
+            ParserContext.Current.VerifyImports();
+
             // Generate default values
             ParserContext.Current.GenerateDefaultValues();
 

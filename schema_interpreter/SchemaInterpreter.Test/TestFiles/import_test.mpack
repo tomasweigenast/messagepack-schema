@@ -1,0 +1,12 @@
+﻿//
+// Test file parser
+// This should be interpreted as a comment
+//
+version:1 // The version of the schema file
+
+import "package1"
+
+type MyType {
+	string_value:string 0 = "hello world" // This is a schema file.
+	my_value:package1.MyModel 1
+}

@@ -21,5 +21,17 @@ namespace SchemaInterpreter.Test
                 Assert.True(condition.Compile()(value), $"Condition: {condition}");
             }
         }
+
+        public static void Throws<TException>(Action method) where TException : Exception
+        {
+            Exception exception = Record.Exception(method);
+            Assert.IsType<TException>(exception);
+        }
+
+        public static void NotThrows(Action method)
+        {
+            Exception exception = Record.Exception(method);
+            Assert.Null(exception);
+        }
     }
 }
