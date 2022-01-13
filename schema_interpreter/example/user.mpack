@@ -1,0 +1,18 @@
+version:1
+
+import "common"
+
+type User {
+    uid:string 0
+    name:string 1
+    email:string 2
+    phone_number?:string 3
+    account_type:AccountType 4 = AccountType.customer
+    addresses:list(common.Address) 5
+}
+
+type AccountType enum {
+    unknown 0
+    customer 1
+    admin 2
+}

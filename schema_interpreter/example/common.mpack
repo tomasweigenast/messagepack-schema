@@ -1,0 +1,14 @@
+version:1
+
+type Address {
+    street_name:string 0
+    house_number?:int32 1
+    city:string 2
+    region:string 3
+    coordinates:Coordinates 4
+}
+
+type Coordinates {
+    latitude:float32 0
+    longitude:float32 1
+}
