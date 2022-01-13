@@ -16,7 +16,7 @@ namespace SchemaInterpreter.Test
 
     public class SchemaPackageBuilder
     {
-        private StringBuilder mWriter;
+        private readonly StringBuilder mWriter;
 
         public SchemaPackageBuilder()
         {
