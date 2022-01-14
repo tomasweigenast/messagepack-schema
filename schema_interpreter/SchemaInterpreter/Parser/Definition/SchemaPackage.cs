@@ -67,6 +67,7 @@ namespace SchemaInterpreter.Parser.Definition
         public void AddType(SchemaType type)
         {
             mTypes.Add(type);
+            Logger.Debug($"Type [{type.Id}] name [{type.Name}] modifier [{type.Modifier}]");
         }
     }
 }

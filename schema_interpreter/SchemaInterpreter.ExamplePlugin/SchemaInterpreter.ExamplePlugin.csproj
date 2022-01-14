@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -10,5 +10,9 @@
   <ItemGroup>
     <ProjectReference Include="..\SchemaInterpreter\SchemaInterpreter.csproj" />
   </ItemGroup>
+
+	<PropertyGroup>
+		<RuntimeIdentifiers>win-x64;win-x86;osx.10.12-x64;debian.8-x64</RuntimeIdentifiers>
+	</PropertyGroup>
 
 </Project>

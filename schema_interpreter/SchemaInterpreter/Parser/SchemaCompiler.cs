@@ -28,11 +28,11 @@ namespace SchemaInterpreter.Parser.V1
             // Verify all imported packages
             ParserContext.Current.VerifyImports();
 
-            // Generate default values
-            ParserContext.Current.GenerateDefaultValues();
-
             // Verify all values
             ParserContext.Current.VerifyAllTypes();
+
+            // Generate default values
+            ParserContext.Current.GenerateDefaultValues();
 
             // Verify enums
             ParserContext.Current.VerifyEnums();

@@ -102,8 +102,21 @@ namespace SchemaInterpreter.Parser.Definition
 
         public static (string package, string name) GetNameAndPackage(string input)
         {
+            Logger.Debug($"Parsing package and type name input '{input}'");
+
             string[] tokens = input.Split('.', StringSplitOptions.RemoveEmptyEntries);
-            return (tokens[0], tokens.Length == 2 ? tokens[1] : null);
+            string name;
+            string package = null;
+
+            if (tokens.Length == 2)
+            {
+                package = tokens[0];
+                name = tokens[1];
+            }
+            else
+                name = tokens[0];
+
+            return (package, name);
         }
     }
 }

@@ -27,24 +27,26 @@ namespace SchemaInterpreter.Plugin
         /// </summary>
         public static PluginEncoding Encoding { get; set; }
 
-        public static void Listen(object sender, DataReceivedEventArgs e)
+        public static void OnData(string data)
         {
-            if (e.Data == null)
+            if (data == null)
                 return;
 
-            LogEvent logEvent = GetLogEvent(e.Data);
+            Logger.Debug($"Receiving data from plugin: {data}");
+
+            LogEvent logEvent = GetLogEvent(data);
             if(logEvent == null)
             {
-                if (e.Data.Contains("plugin:"))
-                    PluginName = e.Data.Split(':')[1];
+                if (data.Contains("plugin:"))
+                    PluginName = data.Split(':')[1];
                 else
                 {
                     PluginOutput output;
                     if (Encoding == PluginEncoding.Json)
-                        output = JsonSerializer.Deserialize<PluginOutput>(e.Data);
+                        output = JsonSerializer.Deserialize<PluginOutput>(data);
                     else
                     {
-                        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(e.Data);
+                        byte[] buffer = System.Text.Encoding.UTF8.GetBytes(data);
                         output = MessagePackSerializer.Deserialize<PluginOutput>(buffer);
                     }
 

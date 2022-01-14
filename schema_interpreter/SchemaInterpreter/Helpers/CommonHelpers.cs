@@ -17,6 +17,9 @@ namespace SchemaInterpreter.Helpers
 
         public static string CalculateMD5(string input)
         {
+            if (input.IsNullOrWhitespace())
+                return null;
+
             using MD5 md5 = MD5.Create();
             byte[] inputBytes = Encoding.ASCII.GetBytes(input);
             byte[] hashBytes = md5.ComputeHash(inputBytes);

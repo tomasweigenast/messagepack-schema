@@ -26,9 +26,9 @@ namespace SchemaInterpreter.Parser.Definition
         public override string ToString()
         {
             if (this is ListSchemaFieldValueType listType)
-                return $"list({listType.ElementType.TypeName})";
+                return $"list({listType.ElementType})";
             else if (this is MapSchemaFieldValueType mapType)
-                return $"map({mapType.KeyType.TypeName},{mapType.ValueType.TypeName})";
+                return $"map({mapType.KeyType},{mapType.ValueType})";
             else if (this is CustomSchemaFieldValueType custom)
                 return custom.CustomType;
             else

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,12 +7,24 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="outputs\**" />
+    <EmbeddedResource Remove="outputs\**" />
+    <None Remove="outputs\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="..\.editorconfig" Link=".editorconfig" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="CliWrap" Version="3.4.0" />
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
     <PackageReference Include="MessagePack" Version="2.3.85" />
   </ItemGroup>
+
+  <PropertyGroup>
+	<RuntimeIdentifiers>win-x64;win-x86;osx.10.12-x64;debian.8-x64</RuntimeIdentifiers>
+	<DebugType>none</DebugType>
+  </PropertyGroup>
 
 </Project>

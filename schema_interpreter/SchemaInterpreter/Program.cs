@@ -6,6 +6,7 @@ using SchemaInterpreter.Plugin;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SchemaInterpreter
@@ -17,7 +18,11 @@ namespace SchemaInterpreter
             var types = LoadVerbs();
             var parser = new CommandLine.Parser((with) =>
             {
+                with.EnableDashDash = true;
                 with.CaseInsensitiveEnumValues = false;
+                with.AutoHelp = true;
+                with.AutoVersion = true;
+                with.HelpWriter = Console.Out;
             });
 
             parser.ParseArguments(args, types)
@@ -43,7 +48,7 @@ namespace SchemaInterpreter
                         break;
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 Logger.Error("An error occurred.");
                 Logger.Error(ex.ToString());

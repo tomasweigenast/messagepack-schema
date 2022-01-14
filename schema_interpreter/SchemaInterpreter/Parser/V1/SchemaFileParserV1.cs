@@ -37,8 +37,6 @@ namespace SchemaInterpreter.Parser.V1
                 
                 ParserContext.Current.CurrentLine = new FileLine(lineIndex, line, packageName);
 
-                Logger.Debug("Removed carriage and tabs.");
-
                 // Remove any comment from the line
                 int commentIndex = line.IndexOf("//");
                 if(commentIndex != -1)
@@ -118,6 +116,7 @@ namespace SchemaInterpreter.Parser.V1
 
                                 var typeField = ReadField(line);
                                 ParserContext.Current.CurrentTypeBuilder.AddField(typeField);
+                                Logger.Debug($"Type field read. Name [{typeField.Name}] value type [{typeField.ValueType}] index [{typeField.Index}] default value [{typeField.DefaultValue}] nullable [{typeField.IsNullable}]");
                                 break;
                         }
                     }

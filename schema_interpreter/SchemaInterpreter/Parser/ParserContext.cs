@@ -45,8 +45,10 @@ namespace SchemaInterpreter.Parser
             set
             {
                 mCurrentPackage = value;
-                if (!mPackages.Any(x => x.Name == value.Name))
+                if(value != null && !mPackages.Any(x => x.Name == value.Name))
                     mPackages.Add(value);
+
+                
             }
         }
 
@@ -86,11 +88,14 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void EnsureTypeId(string typeId, string typeName, string packageName, string packageId)
         {
+            Logger.Debug($"Ensuring type id [{typeId}] name [{typeName}] exists in package [{packageName ?? CurrentPackage.Name}]");
+
             var enumerable = Packages;
+
             if (packageId != null)
                 enumerable = enumerable.Where(x => x.Id == packageId);
             else
-                enumerable = enumerable.Take(1);
+                enumerable = enumerable.Where(x => x.Id == CurrentPackage.Id);
 
             if (!enumerable.SelectMany(x => x.Types).Any(x => x.Id == typeId))
                 Check.ThrowInvalidSchema($"Type name {typeName} was not found in package {packageName}.");
@@ -105,7 +110,7 @@ namespace SchemaInterpreter.Parser
             if (package != null)
                 enumerable = enumerable.Where(x => x.Name == package);
             else
-                enumerable = enumerable.Take(1);
+                enumerable = enumerable.Where(x => x.Id == CurrentPackage.Id);
 
             if (!enumerable.SelectMany(x => x.Types).Where(x => x.Id == typeId).SelectMany(x => x.Fields).Any(x => x.Name == value))
                 Check.ThrowInvalidSchema($"Value {value} is not present in type {typeName}.");
@@ -134,10 +139,14 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void GenerateDefaultValues()
         {
-            Logger.Debug("Generating default values.");
+            Logger.Debug($"Generating default values...");
 
             foreach (SchemaTypeField field in mPackages.SelectMany(x => x.Types).SelectMany(x => x.Fields).Where(x => x.HasDefaultValue && !x.IsDefaultValueGenerated))
             {
+                // Set current package
+                CurrentPackage = mPackages.First(x => x.Types.Any(b => b.Fields.Contains(field)));
+                Logger.Debug($"Set package '{CurrentPackage.Name}' to current.");
+
                 Logger.Debug($"Generating default value for field {field.Name}.");
 
                 // Set the current line to the line where the field is declared
@@ -156,6 +165,8 @@ namespace SchemaInterpreter.Parser
                     else 
                         throw;
                 }
+
+                CurrentPackage = null;
             }
         }
 
@@ -164,14 +175,19 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void VerifyAllTypes()
         {
+            CurrentPackage = null;
+
             Logger.Debug("Running type verification.");
+            Logger.Debug($"Fields: {string.Join(", ", mPackages.SelectMany(x => x.Types).Where(x => x.Modifier == null).SelectMany(x => x.Fields).Where(x => !SchemaFieldValueTypes.Primitives.Contains(x.ValueType.TypeName)).Select(x => $"[{x.Name} {x.ValueType}]"))}");
 
             void EnsureCustomType(CustomSchemaFieldValueType customType)
             {
                 var (package, name) = SchemaTypeField.GetNameAndPackage(customType.CustomType);
 
+                Logger.Debug($"Package: {package} - Name: {name}");
+
                 // get the full package name, including its directory
-                var enumerable = Packages.Where(x => x.Name == package);
+                var enumerable = package == null ? Packages.Where(x => x.Id == CurrentPackage.Id) : Packages.Where(x => x.Name == package);
 
                 // verify package names
                 if (enumerable.Count() > 1)
@@ -184,31 +200,37 @@ namespace SchemaInterpreter.Parser
                 EnsureTypeId(SchemaTypeField.GetId(customType.CustomType), name, schemaPackage.Name, schemaPackage.Id);
             }
 
-            foreach (SchemaTypeField field in mPackages.SelectMany(x => x.Types).Where(x => x.Modifier == null).SelectMany(x => x.Fields).Where(x => !SchemaFieldValueTypes.Primitives.Contains(x.ValueType.TypeName)))
+            foreach (SchemaType schemaType in mPackages.SelectMany(x => x.Types).Where(x => x.Modifier == null))
             {
-                Logger.Debug($"Verifying field {field.Name}.");
+                Logger.Debug($"Verifying fields in schema type [{schemaType.Name}]");
 
-                CurrentLine = field.Line;
-
-                if(field.ValueType is ListSchemaFieldValueType listValue && listValue.ElementType is CustomSchemaFieldValueType elementType)
+                foreach(var field in schemaType.Fields.Where(x => !SchemaFieldValueTypes.Primitives.Contains(x.ValueType.TypeName)))
                 {
-                    Logger.Debug("Ensure list types.");
-                    EnsureCustomType(elementType);
-                }
-                else if(field.ValueType is MapSchemaFieldValueType mapValue)
-                {
-                    Logger.Debug("Ensuring map types.");
+                    Logger.Debug($"Verifying field {field.Name}'s value type {field.ValueType}.");
 
-                    if (mapValue.KeyType is CustomSchemaFieldValueType keyType)
-                        EnsureCustomType(keyType);
+                    CurrentLine = field.Line;
+                    CurrentPackage = mPackages.First(x => x.Types.Contains(schemaType));
 
-                    if(mapValue.ValueType is CustomSchemaFieldValueType valueType)
-                        EnsureCustomType(valueType);
-                }
-                else if(field.ValueType is CustomSchemaFieldValueType customType)
-                {
-                    Logger.Debug("Ensuring custom type.");
-                    EnsureCustomType(customType);
+                    if (field.ValueType is ListSchemaFieldValueType listValue && listValue.ElementType is CustomSchemaFieldValueType elementType)
+                    {
+                        Logger.Debug("Ensure list types.");
+                        EnsureCustomType(elementType);
+                    }
+                    else if (field.ValueType is MapSchemaFieldValueType mapValue)
+                    {
+                        Logger.Debug("Ensuring map types.");
+
+                        if (mapValue.KeyType is CustomSchemaFieldValueType keyType)
+                            EnsureCustomType(keyType);
+
+                        if (mapValue.ValueType is CustomSchemaFieldValueType valueType)
+                            EnsureCustomType(valueType);
+                    }
+                    else if (field.ValueType is CustomSchemaFieldValueType customType)
+                    {
+                        Logger.Debug($"Ensuring custom type: {customType}");
+                        EnsureCustomType(customType);
+                    }
                 }
             }
         }
@@ -235,8 +257,12 @@ namespace SchemaInterpreter.Parser
         /// </summary>
         public void VerifyImports()
         {
+            Logger.Debug("Running import verification.");
+
             foreach (SchemaPackage package in mPackages.Where(x => x.Imports.Count > 0))
             {
+                Logger.Debug($"Verifying imports for package {package.Name}.");
+
                 foreach(string import in package.Imports)
                 {
                     string packageId;

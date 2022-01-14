@@ -44,7 +44,7 @@ namespace SchemaInterpreter.Plugin.Encoder
                             { "index", field.Index },
                             { "isNullable", field.IsNullable },
                             { "type", WriteValueType(field.ValueType) },
-                            { "defaultValue", field.DefaultValue },
+                            { "defaultValue", SerializeDefaultValue(field.DefaultValue) },
                             { "metadata", field.Metadata }
                         };
 
@@ -94,6 +94,18 @@ namespace SchemaInterpreter.Plugin.Encoder
                 };
             else
                 return null;
+        }
+    
+        public static object SerializeDefaultValue(object defaultValue)
+        {
+            if (defaultValue is CustomTypeValue customTypeValue)
+                return new Dictionary<string, object>
+                {
+                    { "typeId", customTypeValue.TypeId },
+                    { "value", customTypeValue.Value }
+                };
+            else
+                return defaultValue;
         }
     }
 }
